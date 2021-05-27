@@ -16,7 +16,7 @@ source venv/bin/activate  # linux
 python -m pip install --upgrade pip
 pip install --upgrade setuptools wheel
 
-# install burg_toolkit in editable mode
+# install in editable mode
 pip install -e .
 
 Dependencies:
