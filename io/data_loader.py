@@ -2,6 +2,7 @@ import argparse
 import yaml
 import glob
 import open3d as o3d
+import trimesh
 
 from collections import UserDict
 import itertools
@@ -15,7 +16,7 @@ class Object:
         self.description = description
         self.mesh_file = mesh_file
 
-    def get_mesh():
+    def get_mesh_o3d():
         return o3d.io.read_triangle_mesh(mesh_file)
 
     def get_mesh_blender():
@@ -27,8 +28,7 @@ class Object:
 
 class ObjectLibrary(UserDict):
     """
-    Contains a library of ObjectType objects and adds some convenience methods to it.
-    Acts like a regular python dict.
+    Python dictionary of Objects. Convenience functions for retrieving object items.
     """
 
     @classmethod
