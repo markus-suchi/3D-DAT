@@ -13,7 +13,8 @@ requirements_default = [
     'tqdm',
     'opencv-python',
     'matplotlib',
-    'pyrender'
+    'pyrender',
+    'configparser'
 ]
 
 
