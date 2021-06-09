@@ -1,0 +1,23 @@
+Blender Images with numpy:
+
+1)
+https://blender.stackexchange.com/questions/40562/how-to-combine-images-using-python
+do i need this line?
+bpy.ops.image.new(name="view.png", width=1024, height=1024)
+
+image = bpy.data.images['view.png']
+image.pixels = numpy_array.tolist()
+
+2)
+https://blender.stackexchange.com/questions/92692/how-to-convert-numpy-array-into-image-and-add-it-to-images-inside-bpy
+if "TestImg.png" not in bpy.data.images.keys():
+    bpy.data.images.new("TestImg.png", width=128, height=128, alpha=True, float_buffer=False)
+outputImg = bpy.data.images["TestImg.png"] 
+input_res = int(math.sqrt(outputImg.size[0]))
+np_out_img = np.zeros((input_res,input_res,4), dtype = np.float16)
+outputImg.pixels = np_out_img.ravel()
+
+
+Identity quaternion:
+(w,x,y,z) = (1,0,0,0)
+

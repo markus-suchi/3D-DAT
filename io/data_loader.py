@@ -81,25 +81,25 @@ class Scene:
 class Pose:
     def __init__(self, values=None):
         if type(values) == list:
-            self.set_from_list(values)
+            self.set_list(values)
         elif type(values) == np.ndarray:
-            self.set_from_4x4(values)
-        elif values==None:
+            self.set_numpy4x4(values)
+        elif values == None:
             self.tf = np.eye(4)
         else:
             raise ValueError("Pose unsupported type.")
 
-
-    def set_from_list(self, tf):
-        if(len(tf)==7):
+    def set_list(self, tf):
+        if(len(tf) == 7):
             self.tf = np.zeros((4, 4))
-            self.tf[3,3] = 1
+            self.tf[3, 3] = 1
             self.tf[:3, -1] = tf[0:3]
-            self.tf[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(tf[3:])
+            self.tf[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(
+                tf[3:])
         else:
             raise ValueError("Pose unsupported type.")
 
-    def set_from_4x4(self, tf):
+    def set_numpy4x4(self, tf):
         if(np.shape(tf) == (4, 4)):
             self.tf = tf
         else:
@@ -271,9 +271,10 @@ def main():
     print(np.shape(cam.as_numpy3x3()))
     print(cam.sensor_width_mm)
     p1 = Pose(np.array(np.eye(4)))
-    p2 = Pose([0,0,0,1,0,0,0])
+    p2 = Pose([0, 0, 0, 1, 0, 0, 0])
     p3 = Pose()
     print(f'p1:\n{p1}\np2:\n{p2}\np3:\n{p3}\n')
+
 
 if __name__ == "__main__":
     main()
