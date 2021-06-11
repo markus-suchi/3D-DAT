@@ -1,14 +1,7 @@
-import argparse
-import configparser
-import yaml
 import glob
 import open3d as o3d
 import os
 import numpy as np
-import trimesh
-
-from collections import UserDict
-import itertools
 
 from v4r_dataset_toolkit.objects import ObjectLibrary
 from v4r_dataset_toolkit.meshreader import MeshReader
@@ -157,7 +150,7 @@ class SceneFileReader:
             f'object_pose_file: {self.object_pose_file}\n'\
             f'object_library_file: {self.object_library_file}\n'\
             f'associations_file: {self.associations_file}\n'\
-            f'reconstruction_dir: {self.reconstruction_dir}\n'
+            f'reconstruction_dir: {self.reconstruction_dir}'
 
     def readScenes():
         pass

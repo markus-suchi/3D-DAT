@@ -18,11 +18,18 @@ def main():
     cfg = configparser.ConfigParser()
     cfg.read(args.config)
     reader = v4r.io.SceneFileReader('/temp', cfg['General'])
-    dummy = v4r.io.MeshReader('test')
     object_lib = v4r.objects.ObjectLibrary.create(reader.object_library_file)
 
+    # testing SceneFileReader
+    print("--- SceneFileReader.")
+    print(reader)
+    #Test MeshReader
+    print("--- MeshReader")
+    mesh_reader = v4r.io.MeshReader('/temp/dummy.ply')
+    print(mesh_reader)
     # Test Object Library
     # single object access
+    print("--- ObjectLibrary")
     print("--- Single access.")
     obj = object_lib[1]
     print(obj)
@@ -37,15 +44,14 @@ def main():
     # filter by class
     for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]:
         print(obj.id, obj.name, obj.class_id)
-    # testing SceneFileReader
-    print("--- SceneFileReader.")
-    print(reader)
-
+    
+    print("--- CameraIntrinsics")
     cam = v4r.io.CameraIntrinsic(1, 2, 3, 4, 5, 6, 100)
     print(cam)
     print(cam.as_numpy3x3())
     print(np.shape(cam.as_numpy3x3()))
     print(cam.sensor_width_mm)
+    print("--- Pose")
     p1 = v4r.io.Pose(np.array(np.eye(4)))
     p2 = v4r.io.Pose([0, 0, 0, 1, 0, 0, 0])
     p3 = v4r.io.Pose()

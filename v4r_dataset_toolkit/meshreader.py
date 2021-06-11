@@ -6,6 +6,9 @@ class MeshReader:
     def __init__(self, file):
         self.file = file
 
+    def __str__(self):
+        return f'mesh_file: {self.file}'
+
     def as_o3d(self):
         return o3d.io.read_triangle_mesh(self.file)
 
