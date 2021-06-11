@@ -22,7 +22,7 @@ requirements_default = [
 reqs_all = list(set(requirements_default))
 
 setuptools.setup(
-    name='Test-toolkit',
+    name='v4r_dataset_toolkit',
     version='0.1',
     python_requires=python_versions,
     install_requires=reqs_all,

@@ -10,49 +10,8 @@ import trimesh
 from collections import UserDict
 import itertools
 
-
-class Object:
-    def __init__(self, id=None, name=None, class_id=None, description=None, mesh_file=None, color=[0, 0, 0]):
-        self.id = id
-        self.name = name
-        self.class_id = class_id
-        self.description = description
-        self.mesh = MeshReader(mesh_file)
-        self.color = color
-
-    def __str__(self):
-        return f'id: {self.id}\n' \
-            f'name: {self.name}\n' \
-            f'class: {self.class_id}\n' \
-            f'description: {self.description}\n' \
-            f'color: {self.color}\n' \
-            f'mesh file: {self.mesh.file}'
-
-
-class ObjectPose():
-    def __init__(self, object=None, pose=np.eye(4)):
-        self.object = object
-        self.pose = pose
-
-
-class ObjectLibrary(UserDict):
-    @classmethod
-    def create(cls, path):
-        with open(path) as fp:
-            root, _ = os.path.split(path)
-            object_dict = cls()
-            for obj in yaml.load(fp, Loader=yaml.FullLoader):
-                object_dict[obj['id']] = Object(id=obj['id'],
-                                                name=obj.get('name'),
-                                                class_id=obj.get('class'),
-                                                description=obj.get(
-                                                    'description'),
-                                                color=obj.get('color'),
-                                                mesh_file=os.path.join(root, obj['mesh']))
-            return object_dict
-
-    def as_list(self, ids=None):
-        return list(map(self.__getitem__, ids or [])) or list(self.values())
+from v4r_dataset_toolkit.objects import ObjectLibrary
+from v4r_dataset_toolkit.meshreader import MeshReader
 
 
 class Scene:
@@ -66,6 +25,7 @@ class Scene:
         self.markers = markers or []  # numpy 4x4 array (saved as quaternion)
         self.mesh = MeshReader(mesh_file)
 
+
 # poses from groundtruth text file, each line
 # groundtruth/ros/scipy:   tx, ty, tz, rx, ry, rz, rw
 # ->
@@ -76,8 +36,6 @@ class Scene:
 # get rotation as 3x3 numpy array
 # get translation as 3x1 numpy array
 # get transformation matrix as 4x4 numpy array
-
-
 class Pose:
     def __init__(self, values=None):
         if type(values) == list:
@@ -176,23 +134,6 @@ class CameraTrajectory:
         # Read poses saved as quaternions and save as np.array 3x3
 
 
-class MeshReader:
-    def __init__(self, file):
-        self.file = file
-
-    def as_o3d(self):
-        return o3d.io.read_triangle_mesh(self.file)
-
-    def as_trimesh(self):
-        return trimesh.load_mesh(self.file)
-
-    def as_blender(self):
-        # import bpy
-        # load the file depending pn extension ply obj something else?
-        # set some attributes depending on name / id?
-        pass
-
-
 class SceneFileReader:
     def __init__(self, root_dir, config):
         self.root_dir = root_dir
@@ -229,52 +170,3 @@ class SceneFileReader:
 
     def readPose():
         pass
-
-
-def main():
-    # run data loader with command line parameters
-    parser = argparse.ArgumentParser(
-        "Example: loading dataset items.")
-    parser.add_argument("-c", "--config", type=str, default="../objects/objects.yaml",
-                        help="Path to dataset information")
-    args = parser.parse_args()
-
-    # Test Scene File Loader
-    cfg = configparser.ConfigParser()
-    cfg.read(args.config)
-    reader = SceneFileReader('/temp', cfg['General'])
-    object_lib = ObjectLibrary.create(reader.object_library_file)
-
-    # Test Object Library
-    # single object access
-    print("--- Single access.")
-    obj = object_lib[1]
-    print(obj)
-    # list object access
-    print("--- Multi access with indices.")
-    for obj in object_lib.as_list([1, 2]):
-        print(obj.id, obj.name, obj.mesh.file)
-    print("--- Multi access without indices.")
-    for obj in object_lib.as_list():
-        print(obj.id, obj.name, obj.mesh.file)
-    print("--- Filter by class.")
-    # filter by class
-    for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]:
-        print(obj.id, obj.name, obj.class_id)
-    # testing SceneFileReader
-    print("--- SceneFileReader.")
-    print(reader)
-
-    cam = CameraIntrinsic(1, 2, 3, 4, 5, 6, 100)
-    print(cam)
-    print(cam.as_numpy3x3())
-    print(np.shape(cam.as_numpy3x3()))
-    print(cam.sensor_width_mm)
-    p1 = Pose(np.array(np.eye(4)))
-    p2 = Pose([0, 0, 0, 1, 0, 0, 0])
-    p3 = Pose()
-    print(f'p1:\n{p1}\np2:\n{p2}\np3:\n{p3}\n')
-
-
-if __name__ == "__main__":
-    main()
