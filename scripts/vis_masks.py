@@ -116,13 +116,14 @@ if __name__ == "__main__":
             object_path, pose_anno)
 
         model_id_to_colors = {
-            "clamp": [0, 255., 255.],
-            "drill": [255., 0., 0.],
-            "mustard": [0., 255., 0.],
-            "jar": [0., 0., 255.],
-            "container": [255., 255., 0.]
+            1: [0, 255., 255.],
+            2: [255., 0., 0.],
+            3: [0., 255., 0.],
+            4: [0., 0., 255.],
+            5: [255., 255., 0.]
         }
         scene_model_ids = [model_id["id"] for model_id in pose_anno]
+        print(scene_model_ids)
         model_colors = [model_id_to_colors[model_id]
                         for model_id in scene_model_ids]
 

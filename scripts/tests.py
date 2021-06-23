@@ -6,6 +6,7 @@ import numpy as np
 
 import v4r_dataset_toolkit as v4r
 
+
 def main():
     # run data loader with command line parameters
     parser = argparse.ArgumentParser(
@@ -23,7 +24,7 @@ def main():
     # testing SceneFileReader
     print("--- SceneFileReader.")
     print(reader)
-    #Test MeshReader
+    # Test MeshReader
     print("--- MeshReader")
     mesh_reader = v4r.io.MeshReader('/temp/dummy.ply')
     print(mesh_reader)
@@ -44,13 +45,14 @@ def main():
     # filter by class
     for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]:
         print(obj.id, obj.name, obj.class_id)
-    
+    # Camera intrinsics
     print("--- CameraIntrinsics")
     cam = v4r.io.CameraIntrinsic(1, 2, 3, 4, 5, 6, 100)
     print(cam)
     print(cam.as_numpy3x3())
     print(np.shape(cam.as_numpy3x3()))
     print(cam.sensor_width_mm)
+    # Pose
     print("--- Pose")
     p1 = v4r.io.Pose(np.array(np.eye(4)))
     p2 = v4r.io.Pose([0, 0, 0, 1, 0, 0, 0])
