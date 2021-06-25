@@ -21,3 +21,8 @@ outputImg.pixels = np_out_img.ravel()
 Identity quaternion:
 (w,x,y,z) = (1,0,0,0)
 
+3) install packages within blender
+cd /path/to/blender/python/bin
+./python -m ensurepip
+./python -m pip install scipy
+
