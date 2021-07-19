@@ -7,7 +7,7 @@ python_versions = '>=3.6, <3.9'  # restricted by availability of pyrender
 
 requirements_default = [
     'numpy',       
-    'open3d==0.9.0', # newer versions do not work with opencv for Ubuntu < 18.04
+    'open3d', # newer versions do not work with opencv for Ubuntu < 18.04
     'trimesh[easy]',
     'pyyaml',
     'tqdm',

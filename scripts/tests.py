@@ -1,6 +1,5 @@
 import argparse
 import configparser
-import yaml
 import os
 import numpy as np
 
@@ -18,7 +17,7 @@ def main():
     # Test Scene File Loader
     cfg = configparser.ConfigParser()
     cfg.read(args.config)
-    reader = v4r.io.SceneFileReader('/temp', cfg['General'])
+    reader = v4r.io.SceneFileReader(cfg['General'])
     object_lib = v4r.objects.ObjectLibrary.create(reader.object_library_file)
 
     # testing SceneFileReader
@@ -52,6 +51,10 @@ def main():
     print(cam.as_numpy3x3())
     print(np.shape(cam.as_numpy3x3()))
     print(cam.sensor_width_mm)
+    print("--- CameraIntrinsics from file")
+    cam = reader.readCameraInfo()
+    print(cam)
+    print(cam.as_numpy3x3())
     # Pose
     print("--- Pose")
     p1 = v4r.io.Pose(np.array(np.eye(4)))

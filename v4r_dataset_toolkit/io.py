@@ -2,9 +2,10 @@ import glob
 import open3d as o3d
 import os
 import numpy as np
+import yaml
 
-from v4r_dataset_toolkit.objects import ObjectLibrary
-from v4r_dataset_toolkit.meshreader import MeshReader
+from .objects import ObjectLibrary
+from .meshreader import MeshReader
 
 
 class Scene:
@@ -82,9 +83,11 @@ def get_poses(path_groundtruth):
 
 
 class CameraIntrinsic:
-    def __init__(self, w, h, fx, fy, cx, cy, sensor_width_mm):
-        self.width = w
-        self.height = h
+    def __init__(self, width=None, height=None,
+                 fx=None, fy=None, cx=None, cy=None,
+                 sensor_width_mm=None):
+        self.width = width
+        self.height = height
         self.fx = fx
         self.fy = fy
         self.cx = cx
@@ -112,7 +115,16 @@ class CameraIntrinsic:
     @classmethod
     def create(cls, file):
         # Read widht, height and intrinsics from yaml file
-        pass
+        with open(file, 'r') as fp:
+            cam = yaml.load(fp, Loader=yaml.FullLoader)
+            return cls(cam.get('image_width'),
+                       cam.get('image_height'),
+                       cam.get('camera_matrix')[0],
+                       cam.get('camera_matrix')[4],
+                       cam.get('camera_matrix')[2],
+                       cam.get('camera_matrix')[5],
+                       cam.get('camera_sensor_width_mm'))
+        return None
 
 
 class CameraTrajectory:
@@ -128,8 +140,8 @@ class CameraTrajectory:
 
 
 class SceneFileReader:
-    def __init__(self, root_dir, config):
-        self.root_dir = root_dir
+    def __init__(self, config):
+        self.root_dir = config.get('root_dir')
         self.scenes_dir = config.get('scenes_dir')
         self.rgb_dir = config.get('rgb_dir')
         self.depth_dir = config.get('depth_dir')
@@ -152,14 +164,15 @@ class SceneFileReader:
             f'associations_file: {self.associations_file}\n'\
             f'reconstruction_dir: {self.reconstruction_dir}'
 
-    def readScenes():
+    def readScenes(self):
         pass
 
-    def readCameraInfo():
+    def readCameraInfo(self):
+        full_path = os.path.join(self.scenes_dir, self.camera_intrinsics_file)
+        return CameraIntrinsic.create(full_path)
+
+    def readObjectLibrary(self):
         pass
 
-    def readObjectLibrary():
-        pass
-
-    def readPose():
+    def readPose(self):
         pass
