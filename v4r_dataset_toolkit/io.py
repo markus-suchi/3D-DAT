@@ -123,7 +123,7 @@ class CameraIntrinsic:
                        cam.get('camera_matrix')[4],
                        cam.get('camera_matrix')[2],
                        cam.get('camera_matrix')[5],
-                       cam.get('camera_sensor_width_mm'))
+                       cam.get('sensor_width_mm'))
         return None
 
 
