@@ -13,7 +13,7 @@ class Object:
         self.name = name
         self.class_id = class_id
         self.description = description
-        self.mesh = MeshReader(mesh_file)
+        self.mesh = MeshReader(mesh_file) if mesh_file else None
         self.color = color
 
     def __str__(self):
@@ -22,7 +22,7 @@ class Object:
             f'class: {self.class_id}\n' \
             f'description: {self.description}\n' \
             f'color: {self.color}\n' \
-            f'mesh file: {self.mesh.file}'
+            f'mesh file: {self.mesh}'
 
 
 class ObjectPose():

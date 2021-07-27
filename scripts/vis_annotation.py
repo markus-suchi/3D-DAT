@@ -27,7 +27,7 @@ def get_poses(path_groundtruth):
     for i in range(len(groundtruth)):
         pose = np.zeros((4, 4))
         pose[3, 3] = 1
-        # quaternions groundtruth -> open3d (same as Eigen): xyzw -> wxyz 
+        # quaternions groundtruth -> open3d (same as Eigen): xyzw -> wxyz
         rot = np.array([quat[i][3], quat[i][0], quat[i][1], quat[i][2]])
         pose[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(rot)
         pose[:3, -1] = trans[i]
@@ -53,7 +53,7 @@ def visualize(rgb, depth, models, pose):
     vis.create_window()
 
     opt = vis.get_render_option()
-    opt.mesh_show_back_face = True 
+    opt.mesh_show_back_face = True
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
         rgb, depth, convert_rgb_to_intensity=False)
 

@@ -1,10 +1,17 @@
 import open3d as o3d
 import trimesh
+import os
+import errno
 
 
 class MeshReader:
     def __init__(self, file):
-        self.file = file
+        if(os.path.exists(file)):
+            self.file = file  # could check here if file exists
+        else:
+            self.file = None
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), file)
 
     def __str__(self):
         return f'mesh_file: {self.file}'

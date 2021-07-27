@@ -6,7 +6,15 @@ import yaml
 from .objects import ObjectLibrary
 from .meshreader import MeshReader
 
-
+# There are 3 different entities which require poses
+# 1. Cameras: Camerinfo + Pose vector
+# 2. Object: ObjectId + Pose
+# 3. Marker: MarkerId/Name + Pose vector
+# If Camera is not registered, the camera pose can be retrieved by the inverse of the marker pose
+# Markers can also be used to retrieve reference point in world coordinates
+# a) groundtruth_handeye.txt has all the poses for regeistered cameras with
+# the base of the arm as the origin.
+# b) groundtruth.txt marker on markersheet with rgb camera frame as the origin.
 # poses from groundtruth text file, each line
 # groundtruth/ros/scipy:   tx, ty, tz, rx, ry, rz, rw
 # ->
@@ -17,10 +25,15 @@ from .meshreader import MeshReader
 # get rotation as 3x3 numpy array
 # get translation as 3x1 numpy array
 # get transformation matrix as 4x4 numpy array
+
+
 class Pose:
-    def __init__(self, values=None):
+    def __init__(self, values=None, wxyz=True):
         if type(values) == list:
-            self.set_list(values)
+            if wxyz:
+                self.set(values)
+            else:
+                self.set_txyzw(values)
         elif type(values) == np.ndarray:
             self.set_numpy4x4(values)
         elif values == None:
@@ -29,13 +42,24 @@ class Pose:
             raise ValueError("Pose unsupported type.")
 
     # from list tx,ty,tz,rw,rx,ry,rz
-    def set_list(self, tf):
+    def set(self, tf):
         if(len(tf) == 7):
             self.tf = np.zeros((4, 4))
             self.tf[3, 3] = 1
             self.tf[:3, -1] = tf[0:3]
             self.tf[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(
                 tf[3:])
+        else:
+            raise ValueError("Pose unsupported type.")
+
+    # from list tx,ty,tz,rx,ry,rz,rw
+    def set_txyzw(self, tf):
+        if(len(tf) == 7):
+            self.tf = np.zeros((4, 4))
+            self.tf[3, 3] = 1
+            self.tf[:3, -1] = tf[0:3]
+            self.tf[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(
+                np.array([tf[6], tf[3], tf[4], tf[5]]))
         else:
             raise ValueError("Pose unsupported type.")
 
@@ -47,31 +71,6 @@ class Pose:
 
     def __str__(self):
         return self.tf.__str__()
-
-# Need to get pose array for camera(s)
-
-
-def get_poses(path_groundtruth):
-    with open(path_groundtruth) as fp:
-        groundtruth = fp.readlines()
-    groundtruth = [line.strip().split() for line in groundtruth]
-
-    trans = [line[1:4] for line in groundtruth]
-    quat = [line[4:] for line in groundtruth]
-
-    poses = []
-    for i in range(len(groundtruth)):
-        pose = np.zeros((4, 4))
-        pose[3, 3] = 1
-        # quaternions groundtruth -> open3d (same as Eigen): xyzw -> wxyz
-        rot = np.array([quat[i][3], quat[i][0], quat[i][1], quat[i][2]])
-        pose[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(rot)
-        pose[:3, -1] = trans[i]
-        poses.append(pose)
-
-    return poses
-
-# Need to get pose for annotated objects
 
 
 class CameraInfo:
@@ -147,7 +146,8 @@ class Scene:
         # TODO: objects/object id with numpy 4x4 array (saved as quaternion)
         self.objects = objects or []
         self.markers = markers or []  # numpy 4x4 array (saved as quaternion)
-        self.reconstruction = MeshReader(mesh_file)
+        self.reconstruction = MeshReader(
+            reconstruction_file) if reconstruction_file else None
 
 
 class SceneFileReader:
@@ -164,6 +164,7 @@ class SceneFileReader:
         self.object_pose_file = config.get('object_pose_file')
         self.reconstruction_file = config.get('reconstruction_file')
         self.mask_dir = config.get('mask_dir')
+        self.scene_ids = self.get_scene_ids()
 
     def __str__(self):
         return f'root_dir: {self.root_dir}\n'\
@@ -178,21 +179,50 @@ class SceneFileReader:
             f'reconstruction_file: {self.reconstruction_file}\n'\
             f'mask_dir: {self.mask_dir}'
 
-    def readCameraInfo(self):
+    def get_camera_info(self):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
         return CameraInfo.create(full_path)
 
-    def readObjectLibrary(self):
+    def get_object_library(self):
         return ObjectLibrary.create(self.object_library_file)
 
-    def getSceneIds(self):
+    def get_scene_ids(self):
         full_path = os.path.join(self.root_dir, self.scenes_dir)
         return sorted([f.name for f in os.scandir(full_path) if f.is_dir()])
 
-    def readScene(self, id):
-        # check if id is in this datasets scene id list
+    def get_camera_poses(self, id):
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, id, self.camera_pose_file)
+        with open(full_path) as fp:
+            pose_lines = fp.readlines()
+        # The recorded poses adds line entries -> disregard first entry
+        return [Pose(line.strip().split()[1:], wxyz=False) for line in pose_lines]
 
+    def get_object_poses(self, id):
+        # objects in recordings are used only with annotation combined
+        # if used with same format as camera
+        # need a way to still have object id which are used without pose (no annoation)
+        # so maybe another file with just id's per each line to corresponding object library entries
+        # or a yaml file with id and pose where pose is defaulted to identity (0,0,0,1,0,0,0)
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, id, self.object_pose_file)
+        return self.get_poses_from_file(full_path) if id in self.scene_ids else None
+
+    def save_object_poses(self, id, object_list):
+        # save the pose using scene id and annotation folder to create a (obj_id, pose) file
+        pass
+
+    def get_scene(self, id):
+        # check if id is in this datasets scene id list
         # access to specific scene should be a function
         # access to specific rgbs/depths should be loaded on demand
+        pass
+
+    def create_reconstruction(self, id):
+        # create reconstruction.ply file for scene
+        pass
+
+    def get_reconstruction(self, id):
+        # read reconstruction for scene
         pass

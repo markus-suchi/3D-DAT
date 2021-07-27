@@ -19,13 +19,8 @@ def main():
     cfg = configparser.ConfigParser()
     cfg.read(args.config)
     reader = v4r.io.SceneFileReader(cfg['General'])
-    object_lib = reader.readObjectLibrary()
+    object_lib = reader.get_object_library()
     print(reader)
-
-    # Test MeshReader
-    print("--- MeshReader")
-    mesh_reader = v4r.io.MeshReader('/temp/dummy.ply')
-    print(mesh_reader)
 
     # Test Object Library
     # single object access
@@ -45,6 +40,14 @@ def main():
     for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]:
         print(obj.id, obj.name, obj.class_id)
 
+    # MeshReader
+    print("--- MeshReader")
+    print("--- Invalid")
+    try:
+        mesh = v4r.meshreader.MeshReader("/temp/not_there.ply")
+    except FileNotFoundError as err:
+        print(err)
+
     # Camera intrinsics
     print("--- CameraInfo")
     cam = v4r.io.CameraInfo('testcam', 1, 2, 3, 4, 5, 6)
@@ -52,10 +55,15 @@ def main():
     print(cam.as_numpy3x3())
     print(np.shape(cam.as_numpy3x3()))
     print(cam.sensor_width_mm)
-    print("--- CameraInfo from reader")
-    cam = reader.readCameraInfo()
+    print("---- CameraInfo from reader")
+    cam = reader.get_camera_info()
     print(cam)
     print(cam.as_numpy3x3())
+
+    # SceneIds
+    print("--- Scene Ids")
+    scene_ids = reader.get_scene_ids()
+    print(scene_ids)
 
     # Pose
     print("--- Pose")
@@ -64,9 +72,11 @@ def main():
     p3 = v4r.io.Pose()
     print(f'p1:\n{p1}\np2:\n{p2}\np3:\n{p3}\n')
 
-    # SceneIds
-    print("--- Scene Ids")
-    print(reader.getSceneIds())
+    cam_poses = reader.get_camera_poses(scene_ids[0])
+    ccams = np.shape(cam_poses)[0]
+    print(f"---- {ccams} Poses (camera) from reader")
+    print(f"----- Cam 1:\n{cam_poses[0]}")
+    print(f"----- Cam {ccams}:\n{cam_poses[ccams-1]}")
 
 
 if __name__ == "__main__":
