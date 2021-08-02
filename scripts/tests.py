@@ -26,16 +26,20 @@ def main():
     # single object access
     print("--- ObjectLibrary")
     print("----- Single access.")
+    print("object_lib[1]")
     obj = object_lib[1]
     print(obj)
     # list object access
     print("----- Multi access with indices.")
+    print("for obj in object_lib.as_list([1,2])")
     for obj in object_lib.as_list([1, 2]):
         print(obj.id, obj.name, obj.mesh.file)
     print("----- Multi access without indices.")
+    print("for obj in object_lib.as_list()")
     for obj in object_lib.as_list():
         print(obj.id, obj.name, obj.mesh.file)
     print("----- Filter by class.")
+    print("for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]")
     # filter by class
     for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]:
         print(obj.id, obj.name, obj.class_id)
@@ -56,12 +60,14 @@ def main():
     print(np.shape(cam.as_numpy3x3()))
     print(cam.sensor_width_mm)
     print("---- CameraInfo from reader")
+    print("reader.get_camera_info()")
     cam = reader.get_camera_info()
     print(cam)
     print(cam.as_numpy3x3())
 
     # SceneIds
     print("--- Scene Ids")
+    print("reader.get_scene_ids")
     scene_ids = reader.get_scene_ids()
     print(scene_ids)
 
@@ -71,7 +77,8 @@ def main():
     p2 = v4r.io.Pose([0, 0, 0, 1, 0, 0, 0])
     p3 = v4r.io.Pose()
     print(f'p1:\n{p1}\np2:\n{p2}\np3:\n{p3}\n')
-
+    print("---- Camera poses")
+    print("reader.get_camera_poses(scene_ids[0]")
     cam_poses = reader.get_camera_poses(scene_ids[0])
     ccams = np.shape(cam_poses)[0]
     print(f"---- {ccams} Poses (camera) from reader")

@@ -203,7 +203,7 @@ class SceneFileReader:
         # objects in recordings are used only with annotation combined
         # if used with same format as camera
         # need a way to still have object id which are used without pose (no annoation)
-        # so maybe another file with just id's per each line to corresponding object library entries
+        # so maybe another file with just id's per line to corresponding object library entries
         # or a yaml file with id and pose where pose is defaulted to identity (0,0,0,1,0,0,0)
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.object_pose_file)
