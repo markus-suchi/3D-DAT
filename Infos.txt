@@ -20,6 +20,8 @@ outputImg.pixels = np_out_img.ravel()
 
 Identity quaternion:
 (w,x,y,z) = (1,0,0,0)
+https://github.com/clemense/quaternion-conventions
+xyzw == "scalar-last format"
 
 3) install packages within blender
 cd /path/to/blender/python/bin
