@@ -6,6 +6,9 @@ import yaml
 
 from .meshreader import MeshReader
 
+# Decide which attributes are optional
+# Idea: Minimal is id and mesh file
+
 
 class Object:
     def __init__(self, id=None, name=None, class_id=None, description=None, mesh_file=None, color=[0, 0, 0]):
@@ -25,12 +28,6 @@ class Object:
             f'mesh file: {self.mesh}'
 
 
-class ObjectPose():
-    def __init__(self, object=None, pose=np.eye(4)):
-        self.object = object
-        self.pose = pose
-
-
 class ObjectLibrary(UserDict):
     @classmethod
     def create(cls, path):
@@ -38,13 +35,15 @@ class ObjectLibrary(UserDict):
             root, _ = os.path.split(path)
             object_dict = cls()
             for obj in yaml.load(fp, Loader=yaml.FullLoader):
+                # check mesh
+                mesh = obj.get('mesh')
                 object_dict[obj['id']] = Object(id=obj['id'],
                                                 name=obj.get('name'),
                                                 class_id=obj.get('class'),
                                                 description=obj.get(
                                                     'description'),
                                                 color=obj.get('color'),
-                                                mesh_file=os.path.join(root, obj['mesh']))
+                                                mesh_file=os.path.join(root, mesh) if mesh else None)
             return object_dict
 
     def as_list(self, ids=None):

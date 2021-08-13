@@ -5,7 +5,7 @@ import numpy as np
 
 import v4r_dataset_toolkit as v4r
 
-
+# These calls should be refactored into unittests
 def main():
     # run data loader with command line parameters
     parser = argparse.ArgumentParser(
@@ -29,6 +29,8 @@ def main():
     print("object_lib[1]")
     obj = object_lib[1]
     print(obj)
+    obj = object_lib[12]
+    print(obj)
     # list object access
     print("----- Multi access with indices.")
     print("for obj in object_lib.as_list([1,2])")
@@ -37,7 +39,12 @@ def main():
     print("----- Multi access without indices.")
     print("for obj in object_lib.as_list()")
     for obj in object_lib.as_list():
-        print(obj.id, obj.name, obj.mesh.file)
+        #mesh file may not be supported
+        #TODO: May make a property which checks this in objects
+        if obj.mesh:
+            print(obj.id, obj.name, obj.mesh.file)
+        else:
+            print(obj.id, obj.name, None)
     print("----- Filter by class.")
     print("for obj in [val for val in object_lib.values() if val.class_id in ['bottle']]")
     # filter by class

@@ -137,6 +137,12 @@ class CameraTrajectory:
         # Read poses saved as quaternions and save as np.array 3x3
 
 
+class ObjectPose:
+    def __init__(self, id, pose=np.eye(4)):
+        self.id = id             # id of object in objectlibrary
+        self.pose = pose         # pose of the object
+
+
 class Scene:
     def __init__(self, scene_id=None, rgb=None, depth=None, cameras=None, objects=None, markers=None, reconstruction_file=None):
         self.scene_id = scene_id
@@ -159,6 +165,9 @@ class SceneFileReader:
         self.camera_pose_file = config.get('camera_pose_file')
         self.camera_intrinsics_file = config.get('camera_intrinsics_file')
         self.object_library_file = config.get('object_library_file')
+        # The associations file is a list of corresponding depth and rgb images
+        # It is used for standalone script to create reconsturctions
+        # TODO: re-evaluate if this is still needed after io is complete
         self.associations_file = config.get('associations_file')
         # How to separate recordings from annotations?
         self.object_pose_file = config.get('object_pose_file')
@@ -192,6 +201,7 @@ class SceneFileReader:
         return sorted([f.name for f in os.scandir(full_path) if f.is_dir()])
 
     def get_camera_poses(self, id):
+        # check if id is in this datasets scene id list
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.camera_pose_file)
         with open(full_path) as fp:
