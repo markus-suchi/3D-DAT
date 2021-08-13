@@ -32,7 +32,16 @@ def get_blender_camera(K, width, height, sensor_width_in_mm):
     lens = K[0] *  sensor_width_in_mm / w
     shift_x = -(K[0,2] / w - 0.5)
     shift_y = (K[1,2] - 0.5 * h) / w
-    return lens, shift_x, shift_y          
+    return lens, shift_x, shift_y     
+    
+def get_blender_camera_fovx(K, width, height):
+    w = width
+    h = height
+    fovx = 2 * math.atan( w / (2 * K[0,0]))
+    fovy = 2 * math.atan( h / (2 * K[1,1]))
+    shift_x = -(K[0,2] / w - 0.5)
+    shift_y = (K[1,2] - 0.5 * h) / w
+    return fovx, fovy, shift_x, shift_y     
 
 def add_cameras(camera_path = "", camera_rgb_path = "", invert=False): 
     camera_poses = get_poses(camera_path, invert)
