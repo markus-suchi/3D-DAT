@@ -29,6 +29,7 @@ def main():
     print("object_lib[1]")
     obj = object_lib[1]
     print(obj)
+    print("object_lib[12]")
     obj = object_lib[12]
     print(obj)
     # list object access
