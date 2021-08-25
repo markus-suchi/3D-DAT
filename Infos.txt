@@ -110,7 +110,20 @@ class ObjectLoader:
         else:
             raise Exception("The given filepath does not exist: {}".format(filepath))
 
+6) Opencv and Blender camera: my camera conversion might not be completely correct
+https://www.rojtberg.net/1601/from-blender-to-opencv-camera-and-back/
+Camera -> Blender
+cam.shift_x = -(c_x / w - 0.5)
+cam.shift_y = (c_y - 0.5 * h) / w
 
+cam.lens = f_x / w * sensor_width_in_mm
+
+pixel_aspect = f_y / f_x
+scene.render.pixel_aspect_x = 1.0
+scene.render.pixel_aspect_y = pixel_aspect
+
+Look at this from retrieving intrinsic matrix from blender:
+https://blender.stackexchange.com/questions/38009/3x4-camera-matrix-from-blender-camera/120063#120063
 
 
 
