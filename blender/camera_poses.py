@@ -102,12 +102,20 @@ def add_cameras(camera_path="", camera_rgb_path="", invert=False):
 
             lens, shift_x, shift_y = get_blender_camera(
                 K, width, height, sensor_width_in_mm)
+
+            # using blender camera with focal length in millimeters
             obj_camera.data.lens_unit = 'MILLIMETERS'
             obj_camera.data.lens = lens
+            obj_camera.data.sensor_width = sensor_width_in_mm
+
+            # using blender camera with FOV(x)
+            # obj_camera.data.lens_unit = 'FOV'
+            # obj_camera.data.angle = fov
+
+            # common camera properties
             obj_camera.data.shift_x = shift_x
             obj_camera.data.shift_y = shift_y
             obj_camera.data.display_size = 0.05
-            obj_camera.data.sensor_width = sensor_width_in_mm
 
             # set background image
             img = bpy.data.images.load(rgb[i])
