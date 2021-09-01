@@ -209,6 +209,20 @@ class SceneFileReader:
         # The recorded poses adds line entries -> disregard first entry
         return [Pose(line.strip().split()[1:], wxyz=False) for line in pose_lines]
 
+    def get_images_rgb(self, id):
+        # return image reader which does not load images right away?
+        pass
+
+    def get_images_depth(self, id):
+        # return depth image reader which does not load images right away?
+        pass
+
+    def get_images_rgbd(self, id):
+        # return rgbd image reader which does not load images right away?
+        # at loading it will use camera info, rgb and depth to create the rgbd image
+        # with the help of open3d (maybe just the mesh?)
+        pass
+
     def get_object_poses(self, id):
         # objects in recordings are used only with annotation combined
         # if used with same format as camera
