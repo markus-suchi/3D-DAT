@@ -26,6 +26,8 @@ xyzw == "scalar-last format"
 3) install packages within blender
 cd /path/to/blender/python/bin
 ./python -m ensurepip
+python -m pip install --upgrade pip
+pip install --upgrade setuptools wheel
 ./python -m pip install scipy
 
 4) organized pointclouds from depth/intrinsics (graspnet): No Color!
