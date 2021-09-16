@@ -27,3 +27,25 @@ class MeshReader:
         # load the file depending pn extension ply obj something else?
         # set some attributes depending on name / id?
         pass
+
+class ImageReader:
+    def __init__(self, file):
+        if(os.path.exists(file)):
+            self.file = file  # could check here if file exists
+        else:
+            self.file = None
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), file)
+
+    def __str__(self):
+        return f'rgb_file: {self.file}'
+
+    def as_o3d(self):
+        return o3d.io.read_image(self.file)
+
+    def as_blender(self):
+        # import bpy
+        # load the file depending pn extension ply obj something else?
+        # set some attributes depending on name / id?
+
+        pass
