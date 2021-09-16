@@ -2,6 +2,7 @@ import open3d as o3d
 import os
 import numpy as np
 import yaml
+import glob
 
 from .objects import ObjectLibrary
 from .meshreader import MeshReader
@@ -175,6 +176,7 @@ class SceneFileReader:
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
 
+
     def __str__(self):
         return f'root_dir: {self.root_dir}\n'\
             f'scenes_dir: {self.scenes_dir}\n'\
@@ -200,6 +202,8 @@ class SceneFileReader:
         full_path = os.path.join(self.root_dir, self.scenes_dir)
         return sorted([f.name for f in os.scandir(full_path) if f.is_dir()])
 
+    # This
+
     def get_camera_poses(self, id):
         # check if id is in this datasets scene id list
         full_path = os.path.join(
@@ -210,11 +214,20 @@ class SceneFileReader:
         return [Pose(line.strip().split()[1:], wxyz=False) for line in pose_lines]
 
     def get_images_rgb(self, id):
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, id, self.rgb_dir)
         # return image reader which does not load images right away?
-        pass
+
+        return [o3d.io.read_image("{}/{:05}.png".format(full_path, i+1))]
 
     def get_images_depth(self, id):
-        # return depth image reader which does not load images right away?
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, id, self.depth_dir)
+
+        # return image reader which does not load images right away?
+        return [o3d.io.read_image("{}/{:05}.png".format(full_path, i+1))]
+
+       # return depth image reader which does not load images right away?
         pass
 
     def get_images_rgbd(self, id):
