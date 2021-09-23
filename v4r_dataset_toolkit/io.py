@@ -218,14 +218,14 @@ class SceneFileReader:
             self.root_dir, self.scenes_dir, id, self.rgb_dir)
         # return image reader which does not load images right away?
 
-        return [o3d.io.read_image("{}/{:05}.png".format(full_path, i+1))]
+        return [o3d.io.read_image("{}/{:06}.png".format(full_path, i+1))]
 
     def get_images_depth(self, id):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.depth_dir)
 
         # return image reader which does not load images right away?
-        return [o3d.io.read_image("{}/{:05}.png".format(full_path, i+1))]
+        return [o3d.io.read_image("{}/{:06}.png".format(full_path, i+1))]
 
        # return depth image reader which does not load images right away?
         pass
