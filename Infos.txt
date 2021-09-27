@@ -113,12 +113,43 @@ class ObjectLoader:
             raise Exception("The given filepath does not exist: {}".format(filepath))
 
 6) Opencv and Blender camera: my camera conversion might not be completely correct
-https://www.rojtberg.net/1601/from-blender-to-opencv-camera-and-back/
+https://gist.github.com/kgaughan/2491663#gistcomment-2992179
 Camera -> Blender
 cam.shift_x = -(c_x / w - 0.5)
 cam.shift_y = (c_y - 0.5 * h) / w
 
 cam.lens = f_x / w * sensor_width_in_mm
+
+7) Parse ranges from string to list
+https://gist.github.com/kgaughan/2491663
+from itertools import chain
+
+def parse_range_list(rl):
+    def collapse_range(ranges):
+        end = None
+        for value in ranges:
+            yield range(max(end, value.start), max(value.stop, end)) if end else value
+            end = max(end, value.stop) if end else value.stop
+
+    def split_range(value):
+        value = value.split('-')
+        for val, prev in zip(value, chain((None,), value)):
+            if val != '':
+                val = int(val)
+                if prev == '':
+                    val *= -1
+                yield val
+
+    def parse_range(r):
+        parts = list(split_range(r.strip()))
+        if len(parts) == 0:
+            return range(0, 0)
+        elif len(parts) > 2:
+            raise ValueError("Invalid range: {}".format(r))
+        return range(parts[0], parts[-1] + 1)
+
+    ranges = sorted(set(map(parse_range, rl.split(","))), key=lambda x: (x.start, x.stop))
+    return chain.from_iterable(collapse_range(ranges))
 
 pixel_aspect = f_y / f_x
 scene.render.pixel_aspect_x = 1.0
