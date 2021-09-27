@@ -158,5 +158,8 @@ scene.render.pixel_aspect_y = pixel_aspect
 Look at this from retrieving intrinsic matrix from blender:
 https://blender.stackexchange.com/questions/38009/3x4-camera-matrix-from-blender-camera/120063#120063
 
+8) Getting camera view borders
+https://blender.stackexchange.com/questions/6377/coordinates-of-corners-of-camera-view-border
+
 
 
