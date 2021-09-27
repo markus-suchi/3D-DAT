@@ -14,23 +14,23 @@ import copy
 width = 1280
 height = 720
 # d415
-fx = 923.101
-fy = 922.568
-cx = 629.3134765625
-cy = 376.28814697265625
+# fx = 923.101
+# fy = 922.568
+# cx = 629.3134765625
+# cy = 376.28814697265625
 
 # d435
-#fx = 909.926 
-#fy = 907.9168
-#cx = 643.5625
-#cy = 349.01718
+fx = 909.926
+fy = 907.9168
+cx = 643.5625
+cy = 349.01718
 
 groundtruth_to_pyrender = np.array([[1, 0, 0, 0],
                                     [0, -1, 0, 0],
                                     [0, 0, -1, 0],
                                     [0, 0, 0, 1]])
 
-frames = 95
+frames = 64
 
 
 def project_mesh_to_2d(models, cam_poses, model_colors):
@@ -108,11 +108,19 @@ if __name__ == "__main__":
         "Reproject models to create annotation images.")
     parser.add_argument("-d", "--dataset", type=str, default="./data",
                         help="Path to reconstructed data")
+    parser.add_argument("-v", "--view", type=int, default=0,
+                        help="View to visualize. 0 is all views.")
     args = parser.parse_args()
 
     groundtruth = "groundtruth_handeye.txt"
     camera_poses = get_poses(
         os.path.join(args.dataset, groundtruth))
+
+    if args.view > 0:
+        frames = [args.view - 1]
+        camera_poses = [camera_poses[args.view - 1]]
+    else:
+        frames = range(frames)
 
     # load yaml files with paths to objects and poses
     path_blender_anno = args.dataset
@@ -130,13 +138,12 @@ if __name__ == "__main__":
             5: [255., 255., 0.]
         }
         scene_model_ids = [model_id["id"] for model_id in pose_anno]
-        print(scene_model_ids)
         model_colors = [model_id_to_colors[model_id]
                         for model_id in scene_model_ids]
 
         imgs_path = os.path.join(args.dataset, "rgb")
         orig_imgs = [cv2.imread("{}/{:05}.png".format(imgs_path, i+1))[..., ::-1]
-                     for i in tqdm(range(frames), desc="Original images loading")]
+                     for i in tqdm(frames, desc="Original images loading")]
 
    # Render views
     annotation_imgs = project_mesh_to_2d(
