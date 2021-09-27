@@ -14,6 +14,13 @@ fy = 922.568
 cx = 629.3134765625
 cy = 376.28814697265625
 
+# d435
+fx = 909.926
+fy = 907.9168
+cx = 643.5625
+cy = 349.01718
+
+
 
 def get_poses(path_groundtruth):
     with open(path_groundtruth) as fp:
