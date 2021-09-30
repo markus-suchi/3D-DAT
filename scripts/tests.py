@@ -16,9 +16,9 @@ def main():
 
     # Test Scene File Loader
     print("--- SceneFileReader.")
-    cfg = configparser.ConfigParser()
-    cfg.read(args.config)
-    reader = v4r.io.SceneFileReader(cfg['General'])
+    #cfg = configparser.ConfigParser()
+    #cfg.read(args.config)
+    reader = v4r.io.SceneFileReader.create(args.config)
     object_lib = reader.get_object_library()
     print(reader)
 

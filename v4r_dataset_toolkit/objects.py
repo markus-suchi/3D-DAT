@@ -20,12 +20,17 @@ class Object:
         self.color = color
 
     def __str__(self):
+        if self.mesh is None:
+            mesh_string = None
+        else:
+            mesh_string = self.mesh.file
+
         return f'id: {self.id}\n' \
             f'name: {self.name}\n' \
             f'class: {self.class_id}\n' \
             f'description: {self.description}\n' \
             f'color: {self.color}\n' \
-            f'mesh file: {self.mesh}'
+            f'mesh file: {mesh_string}'
 
 
 class ObjectLibrary(UserDict):

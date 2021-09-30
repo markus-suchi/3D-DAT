@@ -3,6 +3,7 @@ import os
 import numpy as np
 import yaml
 import glob
+import configparser
 
 from .objects import ObjectLibrary
 from .meshreader import MeshReader
@@ -103,12 +104,23 @@ class CameraInfo:
     def as_numpy3x3(self):
         return np.array([[self.fx, 0, self.cx], [0, self.fy, self.cy], [0, 0, 1]])
 
-    def as_blender(self):
-        # TODO: Either create the blender camera here and import bpy
-        #       or have a blender class which does it and takes this here as input
-        #       or call the blender class here and return it
-        #       Needs to check if blender is actual available
-        pass
+    def lens(self):
+        if self.sensor.width_mm:
+            lens = self.fx * self.sensor_width_in_mm / self.width
+        else:
+            lens = None
+
+        return lens
+
+    def shift_x(self):
+        return -(self.cx / self.widht - 0.5)
+        
+    def shift_y(self):
+        return (self.cy - 0.5 * self.height) / self.widht
+       
+    def fov(self):
+        return 2 * math.atan(w / (2 * self.fx))
+
 
     @classmethod
     def create(cls, file):
@@ -135,7 +147,8 @@ class CameraTrajectory:
     def create(cls, camera_file, pose_file):
         # Read camera params
         self.camera_info = CameraInfo.create(camera_file)
-        # Read poses saved as quaternions and save as np.array 3x3
+        # Read poses, now they are different than object poses
+        # camera: plane text, id, quaternion   object: yaml file id, 4x4 matrix
 
 
 class ObjectPose:
@@ -150,9 +163,10 @@ class Scene:
         self.rgb_files = rgb_files or []  # o3d image
         self.depth_files = depth_files or []  # o3d image
         self.cameras = cameras or []  # o3d camera trajectory
-        # TODO: objects/object id with numpy 4x4 array (saved as quaternion)
+        # objects/object id with numpy 4x4 array (saved as quaternion)
         self.objects = objects or []
-        self.markers = markers or []  # numpy 4x4 array (saved as quaternion)
+        # numpy 4x4 array (saved as quaternion), can there be several markers? Only use this if no cameras?
+        self.markers = markers or [] 
         self.reconstruction = MeshReader(
             reconstruction_file) if reconstruction_file else None
 
@@ -176,7 +190,12 @@ class SceneFileReader:
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
 
-
+    @classmethod
+    def create(cls, config_file):
+        cfg = configparser.ConfigParser()
+        cfg.read(config_file)
+        return SceneFileReader(cfg['General'])
+ 
     def __str__(self):
         return f'root_dir: {self.root_dir}\n'\
             f'scenes_dir: {self.scenes_dir}\n'\
@@ -201,8 +220,6 @@ class SceneFileReader:
     def get_scene_ids(self):
         full_path = os.path.join(self.root_dir, self.scenes_dir)
         return sorted([f.name for f in os.scandir(full_path) if f.is_dir()])
-
-    # This
 
     def get_camera_poses(self, id):
         # check if id is in this datasets scene id list
