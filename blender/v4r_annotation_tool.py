@@ -8,8 +8,6 @@ import bpy
 from . import v4r_dataset_toolkit as v4r
 
 SCENE_FILE_READER = None
-scene_ids = []
-
 
 class save_pose(bpy.types.Operator):
     bl_idname = "pose.save"
@@ -96,16 +94,19 @@ class load_dataset(bpy.types.Operator):
 
     def execute(self, context):
         global SCENE_FILE_READER
-        global scene_ids
 
         print("Opening Dataset Library: " + self.filepath)
         SCENE_FILE_READER = v4r.io.SceneFileReader.create(self.filepath)
 
-        # Fill in dropdown box with scene ids
-        list_scene_ids = SCENE_FILE_READER.scene_ids
-        scene_ids.clear()
-        for i, item in enumerate(list_scene_ids):
-            scene_ids.append((item, str(item), "", i))
+        # Fill in CollectionProperty List with scene ids
+        context.scene.v4r_infos.scene_ids.clear()
+        for item in SCENE_FILE_READER.scene_ids:
+            context.scene.v4r_infos.scene_ids.add().name = item
+
+        # Set to first entry
+        if context.scene.v4r_infos.scene_ids:
+            context.scene.v4r_infos.scene_id=context.scene.v4r_infos.scene_ids[0].name
+            context.scene.v4r_infos.dataset_name = "Custom Dataset"
 
         return {'FINISHED'}
 
@@ -122,26 +123,6 @@ class print_objects(bpy.types.Operator):
 
     def execute(self, context):
         print('Printing v4r_infos')
-        test = context.scene.v4r_infos
-        print(test)
-        print(dir(test))
-        print(type(test))
-        print('Printing scene_ids')
-        test = context.scene.v4r_infos.scene_ids
-        print(test)
-        print(dir(test))
-        print(type(test))
-        print('Printing scene_id_update')
-        test = context.scene.v4r_infos.scene_id_update
-        print(test)
-        print(dir(test))
-        print(type(test))
-
-
-
-
-
-
         global SCENE_FILE_READER
 
         if SCENE_FILE_READER:
@@ -159,20 +140,15 @@ class print_objects(bpy.types.Operator):
      #   print('invoke')
       #  return {'RUNNING_MODAL'}
 
-def update_scene_ids(self, context):
-    global scene_ids
-    return scene_ids
-
-
-class PG_v4r_infos(bpy.types.PropertyGroup):
-    scene_id_update: bpy.props.BoolProperty()
-
-    scene_ids: bpy.props.EnumProperty(
-        name="Scene Id",
-        description="Choose scene to load",
-        items=update_scene_ids
+class PG_v4r_scene_ids(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Scene Id",
+        description="Identifyer for recorder scene."
     )
 
+class PG_v4r_infos(bpy.types.PropertyGroup):
+    dataset_name = bpy.props.StringProperty(name="Dataset")
+    scene_id = bpy.props.StringProperty(name="Scene Id")
+    scene_ids = bpy.props.CollectionProperty(name="Scene Id List", type=PG_v4r_scene_ids)
 
 class PoseAnnotationPanel(bpy.types.Panel):
     bl_label = "Pose Annotation"
@@ -192,10 +168,11 @@ class PoseAnnotationPanel(bpy.types.Panel):
         row.operator("pose.save")
         row = layout.row()
         row.alignment = 'LEFT'
-        row.prop(v4r_infos, "scene_ids")
+        row.prop_search(v4r_infos, "scene_id", v4r_infos, "scene_ids", icon= "IMAGE_DATA")
 
 def register():
     print('registered')
+    bpy.utils.register_class(PG_v4r_scene_ids)
     bpy.utils.register_class(PG_v4r_infos)
     bpy.utils.register_class(save_pose)
     bpy.utils.register_class(load_pose)
@@ -207,6 +184,7 @@ def register():
 
 
 def unregister():
+    bpy.utils.unregister_class(PG_v4r_scene_ids)
     bpy.utils.unregister_class(PG_v4r_infos)
     bpy.utils.unregister_class(save_pose)
     bpy.utils.unregister_class(load_pose)
