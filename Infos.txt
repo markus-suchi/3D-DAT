@@ -161,5 +161,53 @@ https://blender.stackexchange.com/questions/38009/3x4-camera-matrix-from-blender
 8) Getting camera view borders
 https://blender.stackexchange.com/questions/6377/coordinates-of-corners-of-camera-view-border
 
+9) https://blender.stackexchange.com/questions/119267/default-value-for-bpy-props-collectionproperty
+import bpy
+from bpy.app.handlers import persistent
 
+class MyCollectionItem(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="Name", default="Unknown")
+    value = bpy.props.StringProperty(name="Value", default="Unknown")
+
+def setDefaultCollectionValue():
+    myCollection = bpy.context.scene.myCollection
+    # set default value if <myCollection> is empty
+    if not myCollection:
+        collectionItem = myCollection.add()
+        collectionItem.name = "Name 1"
+        collectionItem.value = "Value 1"
+        collectionItem = myCollection.add()
+        collectionItem.name = "Name 2"
+        collectionItem.value = "Value 2"
+
+# This handler is needed to set the default value for <bpy.context.scene.myCollection>
+# right after the addon registration via register()
+def onRegister(scene):
+    setDefaultCollectionValue()
+    # the handler isn't needed anymore, so remove it
+    bpy.app.handlers.scene_update_post.remove(onRegister)
+
+# This handler is needed to set the default value for <bpy.context.scene.myCollection>
+# after any of the following events:
+# - opening Blender
+# - reloading the start-up file via the keys Ctrl N
+# - opening any Blender file
+@persistent
+def onFileLoaded(scene):
+    addDefaultLevels()
+
+def register():
+    bpy.utils.register_class(MyCollectionItem)
+    bpy.types.Scene.myCollection = bpy.props.CollectionProperty(type=MyCollectionItem)
+    # adding handlers defined above in the code
+    bpy.app.handlers.scene_update_post.append(onRegister)
+    bpy.app.handlers.load_post.append(onFileLoaded)
+
+def unregister():
+    bpy.utils.unregister_class(MyCollectionItem)
+    del bpy.types.Scene.myCollection
+    bpy.app.handlers.load_post.remove(onFileLoaded)
+
+if __name__ == "__main__":
+    register()
 
