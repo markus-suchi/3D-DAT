@@ -29,10 +29,7 @@ def main():
     print("object_lib[1]")
     obj = object_lib[1]
     print(obj)
-    print("object_lib[12]")
-    obj = object_lib[12]
-    print(obj)
-    # list object access
+   # list object access
     print("----- Multi access with indices.")
     print("for obj in object_lib.as_list([1,2])")
     for obj in object_lib.as_list([1, 2]):
