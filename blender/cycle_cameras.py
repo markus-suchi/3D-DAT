@@ -27,23 +27,25 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
     )
 
     def execute(self, context):
-        cameras = bpy.data.collections['cameras'].objects
-        cam_objects = [ob for ob in cameras if ob.type == 'CAMERA']
+        if(bpy.data.collections['cameras']):
+            cameras = bpy.data.collections['cameras'].objects
+            cam_objects = [ob for ob in cameras if ob.type == 'CAMERA']
 
-        if len(cam_objects) == 0:
-            print("CANCELLED")
+            if len(cam_objects) == 0:
+                print("CANCELLED")
+                return {'CANCELLED'}
+
+            try:
+                idx = cam_objects.index(context.scene.camera)
+                new_idx = (idx + 1 if self.direction == 'FORWARD' else idx - 1) % len(cam_objects)
+            except ValueError:
+                new_idx = 0
+
+            bpy.context.area.spaces.active.camera = cam_objects[new_idx]
+            context.scene.camera = cam_objects[new_idx]
+            return {'FINISHED'}
+        else:
             return {'CANCELLED'}
-
-        try:
-            idx = cam_objects.index(context.scene.camera)
-            new_idx = (idx + 1 if self.direction == 'FORWARD' else idx - 1) % len(cam_objects)
-        except ValueError:
-            new_idx = 0
-
-            
-        bpy.context.area.spaces.active.camera = cam_objects[new_idx]
-        context.scene.camera = cam_objects[new_idx]
-        return {'FINISHED'}
 
 
 addon_keymaps = []
@@ -70,5 +72,5 @@ def unregister():
     bpy.utils.unregister_class(VIEW3D_OT_cycle_cameras)
 
 
-if __name__ == "__main__":
-    register()
+#if __name__ == "__main__":
+    #register()

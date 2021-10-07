@@ -4,6 +4,7 @@ import numpy as np
 import yaml
 import glob
 import configparser
+import math
 
 from .objects import ObjectLibrary
 from .meshreader import MeshReader
@@ -71,6 +72,12 @@ class Pose:
         else:
             raise ValueError("Pose unsupported type.")
 
+    def rotation(self):
+        return self.tf[:3, :3]
+
+    def translation(self):
+        return self.tf[:3, -1]
+
     def __str__(self):
         return self.tf.__str__()
 
@@ -78,7 +85,7 @@ class Pose:
 class CameraInfo:
     def __init__(self, name=None, width=None, height=None,
                  fx=None, fy=None, cx=None, cy=None,
-                 sensor_width_mm=None):
+                 sensor_width=None):
         self.name = name
         self.width = width
         self.height = height
@@ -86,7 +93,7 @@ class CameraInfo:
         self.fy = fy
         self.cx = cx
         self.cy = cy
-        self.sensor_width_mm = sensor_width_mm
+        self.sensor_width = sensor_width
 
     def __str__(self):
         return f'name: {self.name}\n' \
@@ -96,7 +103,7 @@ class CameraInfo:
             f'fy: {self.fy}\n' \
             f'cx: {self.cx}\n' \
             f'cy: {self.cy}\n' \
-            f'sensor_width_mm: {self.sensor_width_mm}'
+            f'sensor_width: {self.sensor_width}'
 
     def as_o3d(self):
         return o3d.camera.PinholeCameraIntrinsic(self.width, self.height, self.fx, self.fy, self.cx, self.cy)
@@ -105,36 +112,35 @@ class CameraInfo:
         return np.array([[self.fx, 0, self.cx], [0, self.fy, self.cy], [0, 0, 1]])
 
     def lens(self):
-        if self.sensor.width_mm:
-            lens = self.fx * self.sensor_width_in_mm / self.width
+        if self.sensor_width:
+            lens = self.fx * self.sensor_width / self.width
         else:
             lens = None
 
         return lens
 
     def shift_x(self):
-        return -(self.cx / self.widht - 0.5)
-        
-    def shift_y(self):
-        return (self.cy - 0.5 * self.height) / self.widht
-       
-    def fov(self):
-        return 2 * math.atan(w / (2 * self.fx))
+        return -(self.cx / self.width - 0.5)
 
+    def shift_y(self):
+        return (self.cy - 0.5 * self.height) / self.width
+
+    def fov(self):
+        return 2 * math.atan(self.width / (2 * self.fx))
 
     @classmethod
     def create(cls, file):
         # Read width, height and intrinsics from yaml file
         with open(file, 'r') as fp:
             cam = yaml.load(fp, Loader=yaml.FullLoader)
-            return cls(cam.get('name'),
-                       cam.get('image_width'),
-                       cam.get('image_height'),
-                       cam.get('camera_matrix')[0],
-                       cam.get('camera_matrix')[4],
-                       cam.get('camera_matrix')[2],
-                       cam.get('camera_matrix')[5],
-                       cam.get('sensor_width_mm'))
+            return cls(name=cam.get('name'),
+                       width=cam.get('image_width'),
+                       height=cam.get('image_height'),
+                       fx=cam.get('camera_matrix')[0],
+                       fy=cam.get('camera_matrix')[4],
+                       cx=cam.get('camera_matrix')[2],
+                       cy=cam.get('camera_matrix')[5],
+                       sensor_width=cam.get('sensor_width'))
         return None
 
 
@@ -145,7 +151,8 @@ class CameraTrajectory:
 
     @classmethod
     def create(cls, camera_file, pose_file):
-        # Read camera params
+        # Read camera params.
+        # TODO: Think of nested settings: global or per scene camera intrinsics
         self.camera_info = CameraInfo.create(camera_file)
         # Read poses, now they are different than object poses
         # camera: plane text, id, quaternion   object: yaml file id, 4x4 matrix
@@ -166,7 +173,7 @@ class Scene:
         # objects/object id with numpy 4x4 array (saved as quaternion)
         self.objects = objects or []
         # numpy 4x4 array (saved as quaternion), can there be several markers? Only use this if no cameras?
-        self.markers = markers or [] 
+        self.markers = markers or []
         self.reconstruction = MeshReader(
             reconstruction_file) if reconstruction_file else None
 
@@ -189,13 +196,14 @@ class SceneFileReader:
         self.reconstruction_file = config.get('reconstruction_file')
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
+        self.object_library = self.get_object_library()
 
     @classmethod
     def create(cls, config_file):
         cfg = configparser.ConfigParser()
         cfg.read(config_file)
         return SceneFileReader(cfg['General'])
- 
+
     def __str__(self):
         return f'root_dir: {self.root_dir}\n'\
             f'scenes_dir: {self.scenes_dir}\n'\
@@ -253,7 +261,7 @@ class SceneFileReader:
         # with the help of open3d (maybe just the mesh?)
         pass
 
-    def get_object_poses(self, id):
+    def get_load_poses(self, id):
         # objects in recordings are used only with annotation combined
         # if used with same format as camera
         # need a way to still have object id which are used without pose (no annoation)
@@ -261,11 +269,30 @@ class SceneFileReader:
         # or a yaml file with id and pose where pose is defaulted to identity (0,0,0,1,0,0,0)
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.object_pose_file)
-        return self.get_poses_from_file(full_path) if id in self.scene_ids else None
+       
+        objects = None
+        with open(full_path) as fp:
+                objects = yaml.load(fp, Loader=yaml.FullLoader)
 
-    def save_object_poses(self, id, object_list):
-        # save the pose using scene id and annotation folder to create a (obj_id, pose) file
-        pass
+        print("objects from %s" % full_path)
+        for items in objects:
+            print(items)
+        return objects if id in self.scene_ids else None
+
+    def get_object_poses(self, id):
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, id, self.object_pose_file)
+       
+        objects = []
+        with open(full_path) as fp:
+            for items in (yaml.load(fp, Loader=yaml.FullLoader)):
+                id = items.get("id")
+                pose = items.get("pose")
+                if not pose:
+                    pose = np.eye(4).tolist()
+                objects.append((self.object_library[id], pose))
+        return objects
+        
 
     def get_scene(self, id):
         # check if id is in this datasets scene id list

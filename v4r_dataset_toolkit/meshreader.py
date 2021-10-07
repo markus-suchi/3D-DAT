@@ -23,10 +23,28 @@ class MeshReader:
         return trimesh.load_mesh(self.file)
 
     def as_bpy_mesh(self):
-        # import bpy
+        import bpy
+        from io_mesh_ply import import_ply
+
+        mesh = None
         # load the file depending pn extension ply obj something else?
-        # set some attributes depending on name / id?
-        pass
+        if self.file.endswith('.obj'):
+            # load an .obj file:
+            bpy.ops.import_scene.obj(filepath=self.file)
+        elif self.file.endswith('.ply'):
+            mesh = import_ply.load_ply_mesh(self.file,"dummy")
+            # add a default material to ply file
+            #mat = bpy.data.materials.new(name="ply_material")
+            #mat.use_nodes = True
+            #loaded_objects = list(set(bpy.context.selected_objects) - previously_selected_objects)
+            #for obj in loaded_objects:
+            #    obj.data.materials.append(mat)
+        else:
+            raise ValueError("File %s not supported" % self.file)
+
+        return mesh
+
+       
 
 class ImageReader:
     def __init__(self, file):
