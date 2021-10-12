@@ -5,84 +5,45 @@ from tqdm import tqdm
 import trimesh
 import yaml
 import open3d as o3d
+import v4r_dataset_toolkit as v4r
 
 
-width = 1280
-height = 720
-fx = 923.101
-fy = 922.568
-cx = 629.3134765625
-cy = 376.28814697265625
-
-# d435
-fx = 909.926
-fy = 907.9168
-cx = 643.5625
-cy = 349.01718
-
-
-
-def get_poses(path_groundtruth):
-    with open(path_groundtruth) as fp:
-        groundtruth = fp.readlines()
-    groundtruth = [line.strip().split() for line in groundtruth]
-
-    trans = [line[1:4] for line in groundtruth]
-    quat = [line[4:] for line in groundtruth]
-
-    poses = []
-    for i in range(len(groundtruth)):
-        pose = np.zeros((4, 4))
-        pose[3, 3] = 1
-        # quaternions groundtruth -> open3d (same as Eigen): xyzw -> wxyz
-        rot = np.array([quat[i][3], quat[i][0], quat[i][1], quat[i][2]])
-        pose[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(rot)
-        pose[:3, -1] = trans[i]
-        poses.append(pose)
-
-    return poses
-
-
-def load_models_from_blender_scene(object_path, blender_config):
+def load_object_models(scene_file_reader):
     oriented_models = []
-    for child in tqdm(blender_config, desc="Blender anno models loading"):
-        fn = child["path"]
-        pose = np.array(child["pose"]).reshape(4, 4)
-        model = trimesh.load(os.path.join(object_path, fn))
-        model.apply_transform(pose)
+    # Load poses
+    objects = scene_file_reader.get_object_poses(args.scene)
+    for object in tqdm(objects, desc="Loading objects."):
+        scene_object = scene_file_reader.object_library[object[0].id]
+        model = scene_object.mesh.as_trimesh()
+        model.apply_transform(np.array(object[1]).reshape(4, 4))
         oriented_models.append(model)
-
     return oriented_models
 
 
-def visualize(rgb, depth, models, pose):
+def visualize_objects(rgb=None, depth=None, oriented_models=None, camera=None, camera_pose=None):
     vis = o3d.visualization.Visualizer()
     vis.create_window()
 
     opt = vis.get_render_option()
     opt.mesh_show_back_face = True
+
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
         rgb, depth, convert_rgb_to_intensity=False)
 
-    prime = o3d.camera.PinholeCameraIntrinsic(width=width, height=height,
-                                              fx=fx,
-                                              fy=fy,
-                                              cx=cx,
-                                              cy=cy)
-
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
-        rgbd_image, prime)
-    pcd = pcd.transform(pose)
+        rgbd_image, camera)
+
+    pcd = pcd.transform(camera_pose)
     vis.add_geometry(pcd)
 
-    for model in models:
+    for model in oriented_models:
         open3d_model = model.as_open3d
         open3d_model.paint_uniform_color(np.random.rand(3,))
         vis.add_geometry(open3d_model)
 
     ctr = vis.get_view_control()
     cam_view = ctr.convert_to_pinhole_camera_parameters()
-    cam_view.extrinsic = np.linalg.inv(pose)
+    cam_view.extrinsic = np.linalg.inv(camera_pose)
     ctr.convert_from_pinhole_camera_parameters(cam_view)
     vis.run()
     vis.destroy_window()
@@ -91,29 +52,28 @@ def visualize(rgb, depth, models, pose):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Visualize annotated data.")
-    parser.add_argument("-d", "--data", type=str, required=True,
-                        help="Path to scene")
+    parser.add_argument("-c", "--config", type=str, required=True,
+                        help="Path to datast configuration.")
+    parser.add_argument("-s", "--scene", type=str, required=True,
+                        help="Scene identifier to visualize.")
     args = parser.parse_args()
 
-    # load camera poses
-    camera_poses = get_poses(
-        os.path.join(args.data, "groundtruth_handeye.txt"))
+    # Load datset reader
+    scene_file_reader = v4r.io.SceneFileReader.create(args.config)
 
-    # load yaml files with paths to objects and poses
-    with open(os.path.join(args.data, "poses.yaml")) as fp:
-        pose_anno = yaml.load(fp, Loader=yaml.FullLoader)
-        object_path = os.path.split(os.path.split(args.data)[0])[0]
-        oriented_models = load_models_from_blender_scene(
-            object_path, pose_anno)
+    # Load object models
+    oriented_models = load_object_models(scene_file_reader)
 
-    # visualize
+    # load camera and images
+    camera = scene_file_reader.get_camera_info()
+    camera_poses = scene_file_reader.get_camera_poses(args.scene)
     count = len(camera_poses)
-    rgb_path = os.path.join(args.data, "rgb")
-    rgb_imgs = [o3d.io.read_image("{}/{:05}.png".format(rgb_path, i+1))
-                for i in tqdm(range(count), desc="Original images loading")]
-    depth_path = os.path.join(args.data, "depth")
-    depth_imgs = [o3d.io.read_image("{}/{:05}.png".format(depth_path, i+1))
-                  for i in tqdm(range(count), desc="Original images loading")]
+    rgb = scene_file_reader.get_images_rgb(args.scene)
+    depth = scene_file_reader.get_images_depth(args.scene)
 
     for i in range(count):
-        visualize(rgb_imgs[i], depth_imgs[i], oriented_models, camera_poses[i])
+        visualize_objects(oriented_models=oriented_models,
+                          rgb=rgb[i],
+                          depth=depth[i],
+                          camera=camera.as_o3d(),
+                          camera_pose=camera_poses[i].tf)
