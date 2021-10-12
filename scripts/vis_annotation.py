@@ -1,9 +1,7 @@
 import argparse
 import numpy as np
-import os
 from tqdm import tqdm
 import trimesh
-import yaml
 import open3d as o3d
 import v4r_dataset_toolkit as v4r
 
@@ -58,20 +56,16 @@ if __name__ == "__main__":
                         help="Scene identifier to visualize.")
     args = parser.parse_args()
 
-    # Load datset reader
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
 
-    # Load object models
     oriented_models = load_object_models(scene_file_reader)
 
-    # load camera and images
     camera = scene_file_reader.get_camera_info()
     camera_poses = scene_file_reader.get_camera_poses(args.scene)
-    count = len(camera_poses)
     rgb = scene_file_reader.get_images_rgb(args.scene)
     depth = scene_file_reader.get_images_depth(args.scene)
 
-    for i in range(count):
+    for i in range(len(camera_poses)):
         visualize_objects(oriented_models=oriented_models,
                           rgb=rgb[i],
                           depth=depth[i],
