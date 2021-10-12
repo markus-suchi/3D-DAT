@@ -30,6 +30,17 @@ from .meshreader import MeshReader
 # get transformation matrix as 4x4 numpy array
 
 
+def get_file_list(path, extensions):
+    file_list = []
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if any(filename.endswith(extension) for extension in extensions):
+                filepath = os.path.join(root, filename)
+                file_list.append(filepath)
+
+    return file_list
+
+
 class Pose:
     def __init__(self, values=None, wxyz=True):
         if type(values) == list:
@@ -198,7 +209,8 @@ class SceneFileReader:
         self.scene_ids = self.get_scene_ids()
         self.object_library = self.get_object_library()
         self.object_scale = config.get('object_scale')
-        if not self.object_scale: self.object_scale = 1
+        if not self.object_scale:
+            self.object_scale = 1
 
     @classmethod
     def create(cls, config_file):
@@ -243,19 +255,20 @@ class SceneFileReader:
     def get_images_rgb(self, id):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.rgb_dir)
-        # return image reader which does not load images right away?
 
-        return [o3d.io.read_image("{}/{:06}.png".format(full_path, i+1))]
+        extensions = ('.png', '.jpg')
+        files = get_file_list(full_path, extensions)
+        files.sort()
+        return [o3d.io.read_image(file) for file in files]
 
     def get_images_depth(self, id):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.depth_dir)
 
-        # return image reader which does not load images right away?
-        return [o3d.io.read_image("{}/{:06}.png".format(full_path, i+1))]
-
-       # return depth image reader which does not load images right away?
-        pass
+        extensions = ('.png')
+        files = get_file_list(full_path, extensions)
+        files.sort()
+        return [o3d.io.read_image(file) for file in files]
 
     def get_images_rgbd(self, id):
         # return rgbd image reader which does not load images right away?
@@ -263,28 +276,10 @@ class SceneFileReader:
         # with the help of open3d (maybe just the mesh?)
         pass
 
-    def get_load_poses(self, id):
-        # objects in recordings are used only with annotation combined
-        # if used with same format as camera
-        # need a way to still have object id which are used without pose (no annoation)
-        # so maybe another file with just id's per line to corresponding object library entries
-        # or a yaml file with id and pose where pose is defaulted to identity (0,0,0,1,0,0,0)
-        full_path = os.path.join(
-            self.root_dir, self.scenes_dir, id, self.object_pose_file)
-       
-        objects = None
-        with open(full_path) as fp:
-                objects = yaml.load(fp, Loader=yaml.FullLoader)
-
-        print("objects from %s" % full_path)
-        for items in objects:
-            print(items)
-        return objects if id in self.scene_ids else None
-
     def get_object_poses(self, id):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.object_pose_file)
-       
+
         objects = []
         with open(full_path) as fp:
             for items in (yaml.load(fp, Loader=yaml.FullLoader)):
@@ -294,7 +289,6 @@ class SceneFileReader:
                     pose = np.eye(4).tolist()
                 objects.append((self.object_library[id], pose))
         return objects
-        
 
     def get_scene(self, id):
         # check if id is in this datasets scene id list
