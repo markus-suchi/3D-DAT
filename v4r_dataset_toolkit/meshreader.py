@@ -5,7 +5,7 @@ import errno
 
 
 class MeshReader:
-    def __init__(self, file, scale = 1):
+    def __init__(self, file, scale=1):
         if(os.path.exists(file)):
             self.file = file  # could check here if file exists
             self.scale = scale
@@ -21,7 +21,9 @@ class MeshReader:
         return o3d.io.read_triangle_mesh(self.file)
 
     def as_trimesh(self):
-        return trimesh.load_mesh(self.file)
+        scale_matrix = trimesh.transformations.scale_matrix(self.scale, [
+                                                            0, 0, 0])
+        return trimesh.load_mesh(self.file).apply_transform(scale_matrix)
 
     def as_bpy_mesh(self):
         import bpy
@@ -33,19 +35,18 @@ class MeshReader:
             # load an .obj file:
             bpy.ops.import_scene.obj(filepath=self.file)
         elif self.file.endswith('.ply'):
-            mesh = import_ply.load_ply_mesh(self.file,"dummy")
+            mesh = import_ply.load_ply_mesh(self.file, "dummy")
             # add a default material to ply file
             #mat = bpy.data.materials.new(name="ply_material")
             #mat.use_nodes = True
             #loaded_objects = list(set(bpy.context.selected_objects) - previously_selected_objects)
-            #for obj in loaded_objects:
+            # for obj in loaded_objects:
             #    obj.data.materials.append(mat)
         else:
             raise ValueError("File %s not supported" % self.file)
 
         return mesh
 
-       
 
 class ImageReader:
     def __init__(self, file):
