@@ -197,6 +197,8 @@ class SceneFileReader:
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
         self.object_library = self.get_object_library()
+        self.object_scale = config.get('object_scale')
+        if not self.object_scale: self.object_scale = 1
 
     @classmethod
     def create(cls, config_file):

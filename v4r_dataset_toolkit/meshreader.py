@@ -5,9 +5,10 @@ import errno
 
 
 class MeshReader:
-    def __init__(self, file):
+    def __init__(self, file, scale = 1):
         if(os.path.exists(file)):
             self.file = file  # could check here if file exists
+            self.scale = scale
         else:
             self.file = None
             raise FileNotFoundError(
