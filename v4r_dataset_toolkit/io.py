@@ -5,6 +5,7 @@ import yaml
 import glob
 import configparser
 import math
+import errno
 
 from .objects import ObjectLibrary
 from .meshreader import MeshReader
@@ -214,9 +215,14 @@ class SceneFileReader:
 
     @classmethod
     def create(cls, config_file):
-        cfg = configparser.ConfigParser()
-        cfg.read(config_file)
-        return SceneFileReader(cfg['General'])
+        if(os.path.exists(config_file)):
+            cfg = configparser.ConfigParser()
+            #Check if file exists
+            cfg.read(config_file)
+            return SceneFileReader(cfg['General'])
+        else:
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), config_file)
 
     def __str__(self):
         return f'root_dir: {self.root_dir}\n'\
