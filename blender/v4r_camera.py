@@ -100,4 +100,7 @@ def add_cameras(camera_path="", camera_rgb_path="", invert=False,
             bg = obj_camera.data.background_images.new()
             bg.image = img
             bg.alpha = 1.0
+            obj_camera.hide_select = True
             bpy.data.collections["cameras"].objects.link(obj_camera)
+
+
