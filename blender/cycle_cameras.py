@@ -25,6 +25,11 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
         ),
         default='FORWARD'
     )
+    
+    step: bpy.props.IntProperty(
+        name="Step",
+        default=1
+    )
 
     def execute(self, context):
         if(bpy.data.collections['cameras']):
@@ -37,8 +42,8 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
 
             try:
                 idx = cam_objects.index(context.scene.camera)
-                new_idx = (idx + 1 if self.direction ==
-                           'FORWARD' else idx - 1) % len(cam_objects)
+                new_idx = (idx + self.step if self.direction ==
+                           'FORWARD' else idx - self.step) % len(cam_objects)
             except ValueError:
                 new_idx = 0
 
