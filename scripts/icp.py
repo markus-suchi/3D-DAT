@@ -44,19 +44,26 @@ def multiscale_icp(source,
                                                      2.0,
                                                      max_nn=30))
             if config["icp_method"] == "point_to_plane":
-                result_icp = o3d.registration.registration_icp(
+                result_icp = o3d.pipelines.registration.registration_icp(
                     source_down, target_down, distance_threshold,
                     current_transformation,
                     o3d.pipelines.registration.TransformationEstimationPointToPlane(),
                     o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter))
-            if config["icp_method"] == "color":
-                result_icp = o3d.pipelines.registration.registration_colored_icp(
-                    source_down, target_down, voxel_size[scale],
-                    current_transformation,
-                    o3d.pipelines.registration.ICPConvergenceCriteria(
+            elif config["icp_method"] == "color":
+                conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
                         relative_fitness=1e-6,
                         relative_rmse=1e-6,
-                        max_iteration=iter))
+                        max_iteration=iter)
+                result_icp = o3d.pipelines.registration.registration_colored_icp(
+                    source=source_down, 
+                    target=target_down, 
+                    max_correspondence_distance=voxel_size[scale],
+                    init=current_transformation, 
+                    criteria=conv_criteria
+                    )
+            else:
+                raise TypeError("Method %s not supported." % config["icp_method"])
+
         current_transformation = result_icp.transformation
         if i == len(max_iter) - 1:
             information_matrix = o3d.pipelines.registration.get_information_matrix_from_point_clouds(

@@ -84,33 +84,39 @@ def scalable_integrate_rgb_frames(path_dataset, path_groundtruth, intrinsic, con
         if config["save_refined"]:
             save_poses(poses, path_groundtruth[:-4] + "_refined.txt")
 
-    # pcs = []
-    # for frame_id in range(12):
-    #     print(frame_id)
-    #     pc = o3d.geometry.PointCloud.create_from_rgbd_image(
-    #         rgbds[frame_id],
-    #         intrinsic,
-    #         poses[frame_id])
-    #     pcs.append(pc)
-
-    # o3d.visualization.draw_geometries(pcs)
-
     for frame_id in tqdm(range(n_files), desc="Integration"):
         volume.integrate(rgbds[frame_id], intrinsic, poses[frame_id])
 
     print("Meshing out")
     mesh = volume.extract_triangle_mesh()
-    
-    print("Simplifying " + str(len(mesh.vertices)) + " vertices and " + str(len(mesh.triangles)) + " triangles")
-    mesh_simple = mesh.simplify_quadric_decimation(target_number_of_triangles=config["triangles"])
-    print("Now         " + str(len(mesh_simple.vertices)) + " vertices and " + str(len(mesh_simple.triangles)) + " triangles")
-        
-    mesh_simple.compute_vertex_normals()
-    if config["debug_mode"]:
-        o3d.visualization.draw_geometries([mesh_simple])
+   
+    if not config["no_simplify"]:
+        print("Simplifying " + str(len(mesh.vertices)) + " vertices and " + str(len(mesh.triangles)) + " triangles")
+        mesh = mesh.simplify_quadric_decimation(target_number_of_triangles=config["triangles"])
+        print("Now         " + str(len(mesh.vertices)) + " vertices and " + str(len(mesh.triangles)) + " triangles")
+            
+        mesh.compute_vertex_normals()
+        mesh.compute_vertex_normals()
+
+    if config["cluster"]:
+        print("Clustering mesh.")
+        triangle_clusters, cluster_n_triangles, cluster_area = (
+                    mesh.cluster_connected_triangles())
+        triangle_clusters = np.asarray(triangle_clusters)
+        cluster_n_triangles = np.asarray(cluster_n_triangles)
+
+        # Keep only largest cluster
+        largest_cluster_idx = cluster_n_triangles.argmax()
+        triangles_to_remove = triangle_clusters != largest_cluster_idx
+
+        mesh.remove_triangles_by_mask(triangles_to_remove)
 
     mesh_name = os.path.join(path_dataset, "mesh.ply")
-    o3d.io.write_triangle_mesh(mesh_name, mesh_simple, False, True)
+    o3d.io.write_triangle_mesh(mesh_name, mesh, False, True)
+
+    if config["debug_mode"]:
+        o3d.visualization.draw_geometries([mesh])
+
 
 
 CONFIG = {
@@ -119,10 +125,12 @@ CONFIG = {
     "voxel_size": 0.02,
     "tsdf_cubic_size": 1.0,
     "icp_method": "color",
-    "icp_refinement": True,
+    "icp_refinement": False,
     "save_refined": True,
     "sdf_trunc": 0.008,
-    "triangles": 500000
+    "triangles": 500000,
+    "no_simplify": False,
+    "cluster" : False
 }
 
 
@@ -132,20 +140,36 @@ if __name__ == "__main__":
                         help="Path to data to reconstruct")
     parser.add_argument("-g", "--groundtruth", type=str, default="data/16_03_21//empty/groundtruth_refined.txt",
                         help="Path to groundtruth camera poses")
-    parser.add_argument("--no_icp_refinement", action="store_true",
-                        help="Deactivate the ICP refinement step")
+    parser.add_argument("--icp_refinement", action="store_true",
+                        help="Activate the ICP refinement step")
     parser.add_argument("--low_res", action="store_true",
                         help="Use high resolution camera intrinsics")
-    parser.add_argument("--triangles", action="store_true",
+    parser.add_argument("--triangles", type=int, default=500000,
                         help="Target triangles for simpilfication.")
+    parser.add_argument("--icp_method", type=str, default="color",
+                        help="Target triangles for simpilfication.")
+    parser.add_argument("--no_simplify", action="store_true",
+                        help="Do not simplify reconstruction.")
+    parser.add_argument("--cluster", action="store_true",
+                        help="Use largest triangle cluster only.")
     args = parser.parse_args()
+
+    CONFIG["triangles"] = args.triangles
+
+    if args.icp_refinement:
+        CONFIG["icp_refinement"] = True
+        CONFIG["icp_method"]=args.icp_method
+
+    if args.no_simplify:
+        CONFIG["no_simplify"] = True
+
+    if args.cluster:
+        CONFIG["cluster"] = True
 
     print("Configuration:")
     for k, v in CONFIG.items():
         print("\t", k, ":", v)
 
-    if args.no_icp_refinement:
-        CONFIG["icp_refinement"] = False
 
     if args.low_res:
         width = 640
