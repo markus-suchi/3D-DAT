@@ -71,7 +71,6 @@ class Reconstructor:
                 print("Now         " + str(len(mesh.vertices)) + " vertices and " + str(len(mesh.triangles)) + " triangles")
                     
                 mesh.compute_vertex_normals()
-                mesh.compute_vertex_normals()
 
             if self.config["cluster"]:
                 print("Clustering mesh.")
