@@ -10,20 +10,8 @@ import yaml
 import open3d as o3d
 import copy
 
+import v4r_dataset_toolkit as v4r
 
-width = 1280
-height = 720
-# d415
-# fx = 923.101
-# fy = 922.568
-# cx = 629.3134765625
-# cy = 376.28814697265625
-
-# d435
-fx = 909.926
-fy = 907.9168
-cx = 643.5625
-cy = 349.01718
 
 groundtruth_to_pyrender = np.array([[1, 0, 0, 0],
                                     [0, -1, 0, 0],
@@ -33,7 +21,7 @@ groundtruth_to_pyrender = np.array([[1, 0, 0, 0],
 frames = 64
 
 
-def project_mesh_to_2d(models, cam_poses, model_colors):
+def project_mesh_to_2d(models, cam_poses, model_colors, intrinsic):
     # --- PyRender scene setup ------------------------------------------------
     scene = pyrender.Scene(bg_color=[0, 0, 0])
 
@@ -48,7 +36,10 @@ def project_mesh_to_2d(models, cam_poses, model_colors):
         scene.add_node(nm)
 
     # Add camera
-    camera = pyrender.camera.IntrinsicsCamera(fx, fy, cx, cy)
+    camera = pyrender.camera.IntrinsicsCamera(intrinsic.fx,
+                                              intrinsic.fy,
+                                              intrinsic.cx,
+                                              intrinsic.cy)
     nc = pyrender.Node(camera=camera, matrix=np.eye(4))
     scene.add_node(nc)
     nl = pyrender.Node(matrix=np.eye(4))
@@ -56,7 +47,7 @@ def project_mesh_to_2d(models, cam_poses, model_colors):
 
    # --- Rendering -----------------------------------------------------------
     renders = []
-    r = pyrender.OffscreenRenderer(width, height)
+    r = pyrender.OffscreenRenderer(intrinsic.width, intrinsic.height)
     for cam_pose in tqdm(cam_poses, desc="Reprojection rendering"):
         # different coordinate system when using renderer
         cam_pose = cam_pose.dot(groundtruth_to_pyrender)
@@ -71,89 +62,49 @@ def project_mesh_to_2d(models, cam_poses, model_colors):
     return renders
 
 
-def get_poses(path_groundtruth):
-    with open(path_groundtruth) as fp:
-        groundtruth = fp.readlines()
-    groundtruth = [line.strip().split() for line in groundtruth]
-
-    trans = [line[1:4] for line in groundtruth]
-    quat = [line[4:] for line in groundtruth]
-
-    poses = []
-    for i in range(len(groundtruth)):
-        pose = np.zeros((4, 4))
-        pose[3, 3] = 1
-        rot = np.array([quat[i][3], quat[i][0], quat[i][1], quat[i][2]])
-        pose[:3, :3] = o3d.geometry.get_rotation_matrix_from_quaternion(rot)
-        pose[:3, -1] = trans[i]
-        poses.append(pose)
-
-    return poses
-
-
-def load_models_from_blender_scene(object_path, blender_config):
+def load_object_models(scene_file_reader):
     oriented_models = []
-    for child in tqdm(blender_config, desc="Blender anno models loading"):
-        fn = child["path"]
-        pose = np.array(child["pose"]).reshape(4, 4)
-        model = trimesh.load(os.path.join(object_path, fn))
-        model.apply_transform(pose)
+    # Load poses
+    objects = scene_file_reader.get_object_poses(args.scene_id)
+    for object in tqdm(objects, desc="Loading objects."):
+        scene_object = scene_file_reader.object_library[object[0].id]
+        model = scene_object.mesh.as_trimesh()
+        model.apply_transform(np.array(object[1]).reshape(4, 4))
         oriented_models.append(model)
-
     return oriented_models
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Reproject models to create annotation images.")
-    parser.add_argument("-d", "--dataset", type=str, default="./data",
+    parser.add_argument("-c", "--config", type=str, required=True,
                         help="Path to reconstructed data")
-    parser.add_argument("-v", "--view", type=int, default=0,
-                        help="View to visualize. 0 is all views.")
+    parser.add_argument("-s", "--scene_id", type=str, required=True,
+                        help="Scene identifier to visualize.")
     args = parser.parse_args()
 
-    groundtruth = "groundtruth_handeye.txt"
-    camera_poses = get_poses(
-        os.path.join(args.dataset, groundtruth))
+    scene_file_reader = v4r.io.SceneFileReader.create(args.config)
+    camera_poses = scene_file_reader.get_camera_poses(args.scene_id)
+    intrinsic = scene_file_reader.get_camera_info()
+    objects = scene_file_reader.get_object_poses(args.scene_id)
+    object_library = scene_file_reader.get_object_library()
 
-    if args.view > 0:
-        frames = [args.view - 1]
-        camera_poses = [camera_poses[args.view - 1]]
-    else:
-        frames = range(frames)
+    oriented_models = load_object_models(scene_file_reader)
 
-    # load yaml files with paths to objects and poses
-    path_blender_anno = args.dataset
-    with open(os.path.join(path_blender_anno, "poses.yaml")) as fp:
-        pose_anno = yaml.load(fp, Loader=yaml.FullLoader)
-        object_path = os.path.split(os.path.split(args.dataset)[0])[0]
-        oriented_models = load_models_from_blender_scene(
-            object_path, pose_anno)
+    model_colors = []
+    for object in objects:
+        scene_object = scene_file_reader.object_library[object[0].id]
+        model_colors.append(scene_object.color)
 
-        model_id_to_colors = {
-            1: [0, 255., 255.],
-            2: [255., 0., 0.],
-            3: [0., 255., 0.],
-            4: [0., 0., 255.],
-            5: [255., 255., 0.]
-        }
-        scene_model_ids = [model_id["id"] for model_id in pose_anno]
-        model_colors = [model_id_to_colors[model_id]
-                        for model_id in scene_model_ids]
-
-        imgs_path = os.path.join(args.dataset, "rgb")
-        orig_imgs = [cv2.imread("{}/{:05}.png".format(imgs_path, i+1))[..., ::-1]
-                     for i in tqdm(frames, desc="Original images loading")]
-
-   # Render views
+    orig_imgs = scene_file_reader.get_images_rgb(args.scene_id)
+    camera_poses = [pose.tf for pose in camera_poses]
     annotation_imgs = project_mesh_to_2d(
-        oriented_models, camera_poses, model_colors)
+        oriented_models, camera_poses, model_colors, intrinsic)
 
-    # Combined view of the annotation image and original image
     for pose_idx, anno_img in enumerate(annotation_imgs):
         plt.figure(figsize=(21, 13))
         alpha = 0.5
         masked_image = (
-            1. - alpha) * orig_imgs[pose_idx].astype(float) + alpha * anno_img.astype(float)
+            1. - alpha) * np.asarray(orig_imgs[pose_idx]) + alpha * anno_img.astype(float)
         plt.imshow(masked_image/255.)
         plt.show()
