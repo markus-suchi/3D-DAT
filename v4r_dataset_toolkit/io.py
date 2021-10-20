@@ -132,7 +132,8 @@ class CameraInfo:
         return lens
 
     def shift_x(self):
-        return -(self.cx / self.width - 0.5)
+        # return -(self.cx / self.width - 0.5)
+        return -(self.cx - 0.5 * self.width) / self.height
 
     def shift_y(self):
         return (self.cy - 0.5 * self.height) / self.width
@@ -217,7 +218,7 @@ class SceneFileReader:
     def create(cls, config_file):
         if(os.path.exists(config_file)):
             cfg = configparser.ConfigParser()
-            #Check if file exists
+            # Check if file exists
             cfg.read(config_file)
             return SceneFileReader(cfg['General'])
         else:
