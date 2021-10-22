@@ -11,46 +11,6 @@ from . import v4r_blender_utils
 
 SCENE_FILE_READER = None
 
-# class load_pose(bpy.types.Operator):
-# bl_idname = "pose.load"
-# bl_label = "Load Pose"
-# filepath: bpy.props.StringProperty(
-# subtype="FILE_PATH", default="./poses.yaml")
-
-# def execute(self, context):
-# print("Loading poses from: " + self.filepath)
-# # load object infos from OBJECT_LIBRARY
-# output_list = []
-# # for each entry load the object mesh
-# # transform the object using pose entry
-# # link object with scene in object collection
-# # add/set custom attribute for mesh/object storing the id
-# for obj in bpy.data.collections['objects'].objects:
-# print("obj: ", obj.name)
-# pose = np.zeros((4, 4))
-# pose[:, :] = obj.matrix_world
-# # try to get to same coordinate system as jnb reprojection
-# # pose[:3,:3] = pose[:3, :3] * -1
-# # pose[:3, 0] = pose[:3, 0] * -1
-# pose = pose.reshape(-1)
-# # get id from object mesh property
-# output_list.append(
-# {"path": "-/Test.ply", "id": obj.name, "pose": pose.tolist()})
-
-# if output_list:
-# print(yaml.dump(output_list, default_flow_style=False))
-# with open(self.filepath, 'w') as f:
-# yaml.dump(output_list, f, default_flow_style=False)
-
-# return {'FINISHED'}
-
-# def invoke(self, context, event):
-# # set filepath with default value of property
-# self.filepath = self.filepath
-# context.window_manager.fileselect_add(self)
-# print(self.filepath)
-# return {'RUNNING_MODAL'}
-
 
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Scene Id",
@@ -102,8 +62,6 @@ class V4R_OT_load_dataset(bpy.types.Operator):
         SCENE_FILE_READER = v4r.io.SceneFileReader.create(self.filepath)
 
         context.scene.v4r_infos.dataset_file = self.filepath
-
-        # Fill in CollectionProperty List with scene ids
         context.scene.v4r_infos.scene_ids.clear()
         for item in SCENE_FILE_READER.scene_ids:
             context.scene.v4r_infos.scene_ids.add().name = item
@@ -113,7 +71,6 @@ class V4R_OT_load_dataset(bpy.types.Operator):
             context.scene.v4r_infos.scene_id = context.scene.v4r_infos.scene_ids[0].name
 
         # Blender does not update content of dropdownlists for custom property collections
-        # Trigger redraw
         v4r_blender_utils.tag_redraw(context)
 
         return {'FINISHED'}
