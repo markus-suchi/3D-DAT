@@ -10,7 +10,7 @@ def main():
     # run data loader with command line parameters
     parser = argparse.ArgumentParser(
         "Example: loading dataset items.")
-    parser.add_argument("-c", "--config", type=str, default="../objects/objects.yaml",
+    parser.add_argument("-c", "--config", type=str, default="config/config_bop.cfg",
                         help="Path to dataset information")
     args = parser.parse_args()
 
@@ -63,7 +63,7 @@ def main():
     print(cam)
     print(cam.as_numpy3x3())
     print(np.shape(cam.as_numpy3x3()))
-    print(cam.sensor_width_mm)
+    print(cam.sensor_width)
     print("---- CameraInfo from reader")
     print("reader.get_camera_info()")
     cam = reader.get_camera_info()
