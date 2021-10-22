@@ -277,11 +277,23 @@ class SceneFileReader:
         files.sort()
         return [o3d.io.read_image(file) for file in files]
 
-    def get_images_rgbd(self, id):
+    def get_pointclouds(self, id):
         # return rgbd image reader which does not load images right away?
         # at loading it will use camera info, rgb and depth to create the rgbd image
         # with the help of open3d (maybe just the mesh?)
-        pass
+        rgb_images = self.get_images_rgb(id)
+        depth_images = self.get_images_depth(id)
+        camera_info = self.get_camera_info().as_o3d()
+        camera_poses = self.get_camera_poses(id)
+        pointclouds = []
+        for i, camera_pose in enumerate(camera_poses):
+            rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
+                rgb_images[i], depth_images[i], convert_rgb_to_intensity=False)
+            pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
+                rgbd_image, camera_info)
+            pointclouds.append(pcd.transform(camera_pose.tf))
+
+        return pointclouds
 
     def get_object_poses(self, id):
         full_path = os.path.join(
