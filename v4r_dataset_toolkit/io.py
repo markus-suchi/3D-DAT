@@ -132,8 +132,7 @@ class CameraInfo:
         return lens
 
     def shift_x(self):
-        # return -(self.cx / self.width - 0.5)
-        return -(self.cx - 0.5 * self.width) / self.height
+        return -(self.cx / self.width - 0.5)
 
     def shift_y(self):
         return (self.cy - 0.5 * self.height) / self.width
