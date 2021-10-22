@@ -7,95 +7,49 @@ import bpy
 import mathutils
 
 from .. import v4r_dataset_toolkit as v4r
-from . import v4r_camera
+from . import v4r_blender_utils
 
 SCENE_FILE_READER = None
 
-
-# https://blender.stackexchange.com/questions/45138/buttons-for-custom-properties-dont-refresh-when-changed-by-other-parts-of-the-s
-# Auto refresh for custom collection property does not work without tagging a redraw
-def tag_redraw(context, space_type="PROPERTIES", region_type="WINDOW"):
-    """ Redraws given windows area of specific type """
-    for window in context.window_manager.windows:
-        for area in window.screen.areas:
-            if area.spaces[0].type == space_type:
-                for region in area.regions:
-                    if region.type == region_type:
-                        region.tag_redraw()
-
-
-def load_objects(id):
-    objects = []
-    if(SCENE_FILE_READER):
-        objects = SCENE_FILE_READER.get_object_poses(id)
-
-    if "objects" not in bpy.data.collections:
-        obj_collection = bpy.ops.collection.create(name="objects")
-        bpy.context.scene.collection.children.link(
-            bpy.data.collections["objects"])
-    else:
-        # Remove previous loaded objects
-        # TODO: do not reimport already loaded objects, just reset position
-        for o in bpy.data.collections["objects"].objects:
-            m = bpy.data.meshes[o.name]
-            bpy.data.objects.remove(o, do_unlink=True)
-            bpy.data.meshes.remove(m, do_unlink=True)
-
-    for item in objects:
-        mesh = item[0].mesh.as_bpy_mesh()
-        # scaling
-        obj_lookup = SCENE_FILE_READER.object_library[item[0].id]
-        scale_matrix = mathutils.Matrix().Scale(float(obj_lookup.scale), 4)
-        mesh.transform(scale_matrix)
-	# name the object according to id
-        obj_id = str(item[0].id)
-        mesh.name = obj_id + "_" + item[0].name
-        obj = bpy.data.objects.new(mesh.name, mesh)
-        # transform to saved pose
-        obj.matrix_world = mathutils.Matrix(np.asarray(item[1]).reshape(4, 4))
-        obj["v4r_id"] = obj_id
-        bpy.data.collections["objects"].objects.link(obj)
-
-
 # class load_pose(bpy.types.Operator):
-    # bl_idname = "pose.load"
-    # bl_label = "Load Pose"
-    # filepath: bpy.props.StringProperty(
-        # subtype="FILE_PATH", default="./poses.yaml")
+# bl_idname = "pose.load"
+# bl_label = "Load Pose"
+# filepath: bpy.props.StringProperty(
+# subtype="FILE_PATH", default="./poses.yaml")
 
-    # def execute(self, context):
-        # print("Loading poses from: " + self.filepath)
-        # # load object infos from OBJECT_LIBRARY
-        # output_list = []
-        # # for each entry load the object mesh
-        # # transform the object using pose entry
-        # # link object with scene in object collection
-        # # add/set custom attribute for mesh/object storing the id
-        # for obj in bpy.data.collections['objects'].objects:
-        # print("obj: ", obj.name)
-        # pose = np.zeros((4, 4))
-        # pose[:, :] = obj.matrix_world
-        # # try to get to same coordinate system as jnb reprojection
-        # # pose[:3,:3] = pose[:3, :3] * -1
-        # # pose[:3, 0] = pose[:3, 0] * -1
-        # pose = pose.reshape(-1)
-        # # get id from object mesh property
-        # output_list.append(
-        # {"path": "-/Test.ply", "id": obj.name, "pose": pose.tolist()})
+# def execute(self, context):
+# print("Loading poses from: " + self.filepath)
+# # load object infos from OBJECT_LIBRARY
+# output_list = []
+# # for each entry load the object mesh
+# # transform the object using pose entry
+# # link object with scene in object collection
+# # add/set custom attribute for mesh/object storing the id
+# for obj in bpy.data.collections['objects'].objects:
+# print("obj: ", obj.name)
+# pose = np.zeros((4, 4))
+# pose[:, :] = obj.matrix_world
+# # try to get to same coordinate system as jnb reprojection
+# # pose[:3,:3] = pose[:3, :3] * -1
+# # pose[:3, 0] = pose[:3, 0] * -1
+# pose = pose.reshape(-1)
+# # get id from object mesh property
+# output_list.append(
+# {"path": "-/Test.ply", "id": obj.name, "pose": pose.tolist()})
 
-        # if output_list:
-        # print(yaml.dump(output_list, default_flow_style=False))
-        # with open(self.filepath, 'w') as f:
-        # yaml.dump(output_list, f, default_flow_style=False)
+# if output_list:
+# print(yaml.dump(output_list, default_flow_style=False))
+# with open(self.filepath, 'w') as f:
+# yaml.dump(output_list, f, default_flow_style=False)
 
-        # return {'FINISHED'}
+# return {'FINISHED'}
 
-    # def invoke(self, context, event):
-        # # set filepath with default value of property
-        # self.filepath = self.filepath
-        # context.window_manager.fileselect_add(self)
-        # print(self.filepath)
-        # return {'RUNNING_MODAL'}
+# def invoke(self, context, event):
+# # set filepath with default value of property
+# self.filepath = self.filepath
+# context.window_manager.fileselect_add(self)
+# print(self.filepath)
+# return {'RUNNING_MODAL'}
 
 
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
@@ -125,29 +79,8 @@ class V4R_OT_import_scene(bpy.types.Operator):
         id = context.scene.v4r_infos.scene_id
         if(id):
             print("Importing Scene %s" % id)
-            camera = SCENE_FILE_READER.get_camera_info()
-            camera_path = os.path.join(
-                SCENE_FILE_READER.root_dir, SCENE_FILE_READER.scenes_dir,
-                id,
-                SCENE_FILE_READER.camera_pose_file)
-            camera_rgb_path = os.path.join(
-                SCENE_FILE_READER.root_dir, SCENE_FILE_READER.scenes_dir,
-                id,
-                SCENE_FILE_READER.rgb_dir)
-
-            v4r_camera.add_cameras(camera_path=camera_path,
-                                   camera_rgb_path=camera_rgb_path,
-                                   invert=False,
-                                   intrinsics=camera.as_numpy3x3(),
-                                   width=camera.width,
-                                   height=camera.height,
-                                   lens=camera.lens(),
-                                   fov=camera.fov(),
-                                   sensor_width=camera.sensor_width,
-                                   shift_x=camera.shift_x(),
-                                   shift_y=camera.shift_y())
-
-            load_objects(id)
+            v4r_blender_utils.load_cameras(SCENE_FILE_READER, id)
+            v4r_blender_utils.load_objects(SCENE_FILE_READER, id)
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -181,7 +114,7 @@ class V4R_OT_load_dataset(bpy.types.Operator):
 
         # Blender does not update content of dropdownlists for custom property collections
         # Trigger redraw
-        tag_redraw(context)
+        v4r_blender_utils.tag_redraw(context)
 
         return {'FINISHED'}
 
