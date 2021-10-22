@@ -1,10 +1,10 @@
 Verifying annotated sample test scene:
 
 # visualize single view in scene using pointcloud and mesh objects
-python vis_annotation.py -d ~/temp/BURG/scenes/003
+python vis_annotation.py -c ~/temp/dataset/config.cfg -s "001"
 
 # visualize object masks of single view in scene 
-python vis_mask.py -d ~/temp/BURG/scenes/003
+python vis_mask.py -c ~/temp/dataset/config.cfg -s "001"
 
 
 
@@ -40,7 +40,6 @@ Folder and Files:
 pose.yaml
 ---------------------------------------------------------------
 id: <name>
-path: <object path>/<file>
 pose: 4x4 matrix
 
 
@@ -52,8 +51,3 @@ id, tx, ty, tz, rx, ry, rz, rw
 current view: id
 translation: tx,ty,tz
 rotation as quaterion: rx, ry, rz, rw
-
-
-associations.txt
----------------------------------------------------------------
-ignore, it is an intermediate file for reconstructions
