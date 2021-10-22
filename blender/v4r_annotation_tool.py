@@ -6,7 +6,7 @@ import yaml
 import bpy
 import mathutils
 
-from . import v4r_dataset_toolkit as v4r
+from .. import v4r_dataset_toolkit as v4r
 from . import v4r_camera
 
 SCENE_FILE_READER = None
