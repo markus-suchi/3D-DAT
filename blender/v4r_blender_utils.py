@@ -86,8 +86,8 @@ def load_cameras(SCENE_FILE_READER, id):
         if bpy.data.collections["cameras"].objects.get(name):
             assert(False, "Tried to overwrite camera.")
         else:
-            cam1 = bpy.data.cameras.new(name)
-            obj_camera = bpy.data.objects.new(name, cam1)
+            cam = bpy.data.cameras.new(name)
+            obj_camera = bpy.data.objects.new(name, cam)
             camera_pose = camera_poses[i].tf.dot(groundtruth_to_blender)
             location = camera_pose[:3, -1]
             rotation = camera_pose[:3, :3]
