@@ -27,6 +27,7 @@ class MeshReader:
 
     def as_bpy_mesh(self):
         import bpy
+        import mathutils
         from io_mesh_ply import import_ply
 
         mesh = None
@@ -36,6 +37,9 @@ class MeshReader:
             bpy.ops.import_scene.obj(filepath=self.file)
         elif self.file.endswith('.ply'):
             mesh = import_ply.load_ply_mesh(self.file, "dummy")
+            scale_matrix = mathutils.Matrix().Scale(float(self.scale), 4)
+            mesh.transform(scale_matrix)
+
             # add a default material to ply file
             #mat = bpy.data.materials.new(name="ply_material")
             #mat.use_nodes = True

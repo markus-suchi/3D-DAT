@@ -37,10 +37,6 @@ def load_objects(SCENE_FILE_READER, id):
 
     for item in objects:
         mesh = item[0].mesh.as_bpy_mesh()
-        # scaling
-        obj_lookup = SCENE_FILE_READER.object_library[item[0].id]
-        scale_matrix = mathutils.Matrix().Scale(float(obj_lookup.scale), 4)
-        mesh.transform(scale_matrix)
         # name the object according to id
         obj_id = str(item[0].id)
         mesh.name = obj_id + "_" + item[0].name
