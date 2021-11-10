@@ -43,6 +43,8 @@ def load_objects(SCENE_FILE_READER, id):
         obj = bpy.data.objects.new(mesh.name, mesh)
         # transform to saved pose
         obj.matrix_world = mathutils.Matrix(np.asarray(item[1]).reshape(4, 4))
+        r, g, b = item[0].color
+        obj.color = (r, g, b, 1)
         obj["v4r_id"] = obj_id
         bpy.data.collections["objects"].objects.link(obj)
 
