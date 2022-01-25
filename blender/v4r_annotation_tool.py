@@ -28,6 +28,7 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
 class V4R_OT_import_scene(bpy.types.Operator):
     bl_idname = "v4r.import_scene"
     bl_label = "Import Scene"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(self, context):
@@ -44,6 +45,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
         id = context.scene.v4r_infos.scene_id
         if(id):
+            bpy.context.window.cursor_set("WAIT")
             print("Importing Scene %s" % id)
             cam_views = v4r_blender_utils.get_cam_views()
             v4r_blender_utils.load_cameras(SCENE_FILE_READER, id)
@@ -53,6 +55,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
                 bpy.ops.object.select_all(action='DESELECT')
                 view.view_perspective='CAMERA'
 
+            bpy.context.window.cursor_set("DEFAULT")
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -64,12 +67,14 @@ class V4R_OT_load_dataset(bpy.types.Operator):
 
     bl_idname = "v4r.load_dataset"
     bl_label = "Load Dataset"
+    bl_options = {'REGISTER', 'UNDO'}
     filepath: bpy.props.StringProperty(subtype="FILE_PATH", default="*.yaml")
     loaded: bpy.props.BoolProperty(name="loaded", default=False)
 
     def execute(self, context):
         global SCENE_FILE_READER
 
+        bpy.context.window.cursor_set("WAIT")
         print("Opening Dataset Library: " + self.filepath)
         SCENE_FILE_READER = v4r.io.SceneFileReader.create(self.filepath)
 
@@ -84,7 +89,7 @@ class V4R_OT_load_dataset(bpy.types.Operator):
 
         # Blender does not update content of dropdownlists for custom property collections
         v4r_blender_utils.tag_redraw(context)
-
+        bpy.context.window.cursor_set("DEFAULT")
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -167,23 +172,6 @@ class V4R_PT_annotation(bpy.types.Panel):
         col.separator()
 
         col.operator("v4r.save_pose")
-
-def set_camera(camera):
-    for area in bpy.context.screen.areas:
-        for space in area.spaces:
-            if space.type == 'VIEW_3D':
-                space.use_local_camera=True
-                space.camera = camera
- 
-def get_cam_views():
-    cam_views = []
-    for area in bpy.context.screen.areas:
-        for space in area.spaces:
-            if space.type == 'VIEW_3D':
-                current_perspective = space.region_3d.view_perspective
-                if current_perspective == 'CAMERA':
-                    cam_views.append(space.region_3d)
-    return cam_views
 
 def register():
     bpy.utils.register_class(V4R_PG_scene_ids)
