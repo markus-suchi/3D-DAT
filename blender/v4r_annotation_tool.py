@@ -173,6 +173,10 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         col.operator("v4r.save_pose")
 
+        col.separator()
+
+        col.prop(context.area.spaces.active,"camera", icon='CAMERA_DATA')
+
 def register():
     bpy.utils.register_class(V4R_PG_scene_ids)
     bpy.utils.register_class(V4R_PG_infos)

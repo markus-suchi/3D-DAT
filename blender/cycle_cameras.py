@@ -15,7 +15,7 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
     """Cycle through available cameras"""
     bl_idname = "view3d.cycle_cameras"
     bl_label = "Cycle Cameras"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     direction: bpy.props.EnumProperty(
         name="Direction",
