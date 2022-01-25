@@ -1,6 +1,37 @@
+import os
+import shutil
+import sys
+
+
+def copy_startup_file(dirname, filename):
+    # --- create the startup file ---
+    script_file = os.path.abspath(__file__)
+    addon_dir = os.path.dirname(script_file)
+
+    addon_dir_link, _ = os.path.split(os.path.dirname(__file__))
+    script_dir, _ = os.path.split(addon_dir_link)
+    startup_dir = os.path.join(
+        script_dir, 'startup', 'bl_app_templates_system')
+    setup_gui_startup_dir = os.path.join(
+        startup_dir, dirname)
+    setup_gui_startup_file = os.path.join(
+        setup_gui_startup_dir, 'startup.blend')
+    setup_gui_startup_file_source = os.path.join(
+        addon_dir, 'blender', filename)
+
+    if os.path.exists(startup_dir):
+        if not os.path.exists(setup_gui_startup_dir):
+            os.mkdir(setup_gui_startup_dir)
+        shutil.copyfile(setup_gui_startup_file_source,
+                        setup_gui_startup_file)
+    else:
+        print(f"Startup dir {startup_dir} does not exist")
+
+
+
 bl_info = {
     "author": "Markus Suchi",
-    "name": "V4R - Annotation Plugin",
+    "name": "3D-SADT - Annotation Plugin",
     "description": "Tools for annotating RGBD-data",
     "warning": "",
     "version": (0, 1),
@@ -18,6 +49,8 @@ else:
     from . import v4r_dataset_toolkit as v4r
     from .blender import v4r_annotation_tool
     from .blender import cycle_cameras
+    copy_startup_file('3D-SADT', '3D-SADT-single.blend')
+    copy_startup_file('3D-SADT-dual', '3D-SADT-dual.blend')
 
 
 #### REGISTER ###

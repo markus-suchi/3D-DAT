@@ -17,6 +17,10 @@ def tag_redraw(context, space_type="PROPERTIES", region_type="WINDOW"):
                     if region.type == region_type:
                         region.tag_redraw()
 
+def tag_redraw_all():
+    for area in bpy.context.screen.areas:
+        area.tag_redraw()
+
 
 def load_objects(SCENE_FILE_READER, id):
     objects = []

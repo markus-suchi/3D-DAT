@@ -48,8 +48,8 @@ class V4R_OT_import_scene(bpy.types.Operator):
             bpy.context.window.cursor_set("WAIT")
             print("Importing Scene %s" % id)
             cam_views = v4r_blender_utils.get_cam_views()
-            v4r_blender_utils.load_cameras(SCENE_FILE_READER, id)
             v4r_blender_utils.load_objects(SCENE_FILE_READER, id)
+            v4r_blender_utils.load_cameras(SCENE_FILE_READER, id)
             v4r_blender_utils.set_camera(bpy.data.collections['cameras'].objects[0])
             for view in cam_views:
                 bpy.ops.object.select_all(action='DESELECT')
@@ -88,7 +88,7 @@ class V4R_OT_load_dataset(bpy.types.Operator):
             context.scene.v4r_infos.scene_id = context.scene.v4r_infos.scene_ids[0].name
 
         # Blender does not update content of dropdownlists for custom property collections
-        v4r_blender_utils.tag_redraw(context)
+        v4r_blender_utils.tag_redraw_all()
         bpy.context.window.cursor_set("DEFAULT")
         return {'FINISHED'}
 
