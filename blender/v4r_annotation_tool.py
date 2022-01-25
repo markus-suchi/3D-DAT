@@ -29,18 +29,30 @@ class V4R_OT_import_scene(bpy.types.Operator):
     bl_idname = "v4r.import_scene"
     bl_label = "Import Scene"
 
+    @classmethod
+    def poll(self, context):
+        return SCENE_FILE_READER is not None
+
     def execute(self, context):
         global SCENE_FILE_READER
 
         if not SCENE_FILE_READER:
-            print("You need to open the dataset file first.")
+            text = "You need to load a dataset file first."
+            self.report({'ERROR'}, text)
+            print(text)
             return {'CANCELLED'}
 
         id = context.scene.v4r_infos.scene_id
         if(id):
             print("Importing Scene %s" % id)
+            cam_views = v4r_blender_utils.get_cam_views()
             v4r_blender_utils.load_cameras(SCENE_FILE_READER, id)
             v4r_blender_utils.load_objects(SCENE_FILE_READER, id)
+            v4r_blender_utils.set_camera(bpy.data.collections['cameras'].objects[0])
+            for view in cam_views:
+                bpy.ops.object.select_all(action='DESELECT')
+                view.view_perspective='CAMERA'
+
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -124,9 +136,13 @@ class V4R_OT_save_pose(bpy.types.Operator):
 class V4R_PT_annotation(bpy.types.Panel):
     bl_label = "V4R Annotation"
     bl_idname = "V4R_PT_annotation"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "scene"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "3D-SADT"
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == 'VIEW_3D'
 
     def draw(self, context):
         layout = self.layout
@@ -152,6 +168,22 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         col.operator("v4r.save_pose")
 
+def set_camera(camera):
+    for area in bpy.context.screen.areas:
+        for space in area.spaces:
+            if space.type == 'VIEW_3D':
+                space.use_local_camera=True
+                space.camera = camera
+ 
+def get_cam_views():
+    cam_views = []
+    for area in bpy.context.screen.areas:
+        for space in area.spaces:
+            if space.type == 'VIEW_3D':
+                current_perspective = space.region_3d.view_perspective
+                if current_perspective == 'CAMERA':
+                    cam_views.append(space.region_3d)
+    return cam_views
 
 def register():
     bpy.utils.register_class(V4R_PG_scene_ids)

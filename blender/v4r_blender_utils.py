@@ -44,7 +44,7 @@ def load_objects(SCENE_FILE_READER, id):
         # transform to saved pose
         obj.matrix_world = mathutils.Matrix(np.asarray(item[1]).reshape(4, 4))
         r, g, b = item[0].color
-        obj.color = (r, g, b, 1)
+        obj.color = (r/255., g/255., b/255., 1)
         obj["v4r_id"] = obj_id
         bpy.data.collections["objects"].objects.link(obj)
 
@@ -77,13 +77,16 @@ def load_cameras(SCENE_FILE_READER, id):
     rgb = glob.glob(camera_rgb_path + "/*.png")
     rgb.sort()
 
-    for i in range(len(camera_poses)):
-        name = "Camera_" + str(i)
-
+    #no active object
+    bpy.ops.object.select_all(action='DESELECT')
+    if camera_poses:
         if "cameras" not in bpy.data.collections:
             cam_collection = bpy.ops.collection.create(name="cameras")
             bpy.context.scene.collection.children.link(
                 bpy.data.collections["cameras"])
+
+    for i in range(len(camera_poses)):
+        name = "Camera_" + str(i)
 
         if bpy.data.collections["cameras"].objects.get(name):
             assert(False, "Tried to overwrite camera.")
@@ -120,3 +123,27 @@ def load_cameras(SCENE_FILE_READER, id):
             bg.alpha = 1.0
             obj_camera.hide_select = True
             bpy.data.collections["cameras"].objects.link(obj_camera)
+
+            # set render output for camera
+            for scene in bpy.data.scenes:
+                scene.render.resolution_x = camera_info.width
+                scene.render.resolution_y = camera_info.height
+
+def set_camera(camera):
+    for area in bpy.context.screen.areas:
+        for space in area.spaces:
+            if space.type == 'VIEW_3D':
+                space.use_local_camera=True
+                space.camera = camera
+ 
+def get_cam_views():
+    cam_views = []
+    for area in bpy.context.screen.areas:
+        for space in area.spaces:
+            if space.type == 'VIEW_3D':
+                current_perspective = space.region_3d.view_perspective
+                if current_perspective == 'CAMERA':
+                    cam_views.append(space.region_3d)
+    return cam_views
+
+

@@ -31,6 +31,11 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
         default=1
     )
 
+    @classmethod
+    def poll(self, context):
+        return (context.area.type == 'VIEW_3D' and 
+                (bpy.data.collections.get('cameras') is not None))
+
     def execute(self, context):
         if(bpy.data.collections['cameras']):
             cameras = bpy.data.collections['cameras'].objects
@@ -41,7 +46,7 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
                 return {'CANCELLED'}
 
             try:
-                idx = cam_objects.index(context.scene.camera)
+                idx = cam_objects.index(context.area.spaces.active.camera)
                 new_idx = (idx + self.step if self.direction ==
                            'FORWARD' else idx - self.step) % len(cam_objects)
             except ValueError:
@@ -49,7 +54,6 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
 
             bpy.context.area.spaces.active.camera = cam_objects[new_idx]
             bpy.context.area.spaces.active.use_local_camera = True
-            context.scene.camera = cam_objects[new_idx]
             return {'FINISHED'}
         else:
             return {'CANCELLED'}
