@@ -34,7 +34,9 @@ class MeshReader:
         # load the file depending pn extension ply obj something else?
         if self.file.endswith('.obj'):
             # load an .obj file:
-            bpy.ops.import_scene.obj(filepath=self.file)
+            print("wavefront obj files not yet supported")
+            raise ValueError("File %s not supported" % self.file)
+            #bpy.ops.import_scene.obj(filepath=self.file)
         elif self.file.endswith('.ply'):
             mesh = import_ply.load_ply_mesh(self.file, "dummy")
             scale_matrix = mathutils.Matrix().Scale(float(self.scale), 4)
