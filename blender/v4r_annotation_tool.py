@@ -35,7 +35,7 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
     color_alpha: bpy.props.FloatProperty(name="Transparency", min=0.0, max=1.0,
                                          default=0.5,
                                          update=update_alpha, options=set())
-    color_type:  bpy.props.EnumProperty(name="Display
+    color_type:  bpy.props.EnumProperty(name="Display",
                                         items=[('OBJECT', 'COLOR', 'Object Color'),
                                                ('VERTEX', 'VERTEX', 'Vertex Color')],
                                         update=update_color_type, options=set())
@@ -132,7 +132,7 @@ class V4R_OT_save_pose(bpy.types.Operator):
             return {'FINISHED'}
         elif SCENE_FILE_READER and id:
             full_path = os.path.join(SCENE_FILE_READER.root_dir,
-                                     SCENE_FILE_READER.scenes_dir,
+                                     SCENE_FILE_READER.annotation_dir,
                                      id,
                                      SCENE_FILE_READER.object_pose_file)
 

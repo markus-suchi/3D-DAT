@@ -209,6 +209,7 @@ class SceneFileReader:
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
         self.object_library = self.get_object_library()
+        self.annotation_dir = config.get('annotation_dir')
         self.object_scale = config.get('object_scale')
         if not self.object_scale:
             self.object_scale = 1
@@ -235,12 +236,28 @@ class SceneFileReader:
             f'associations_file: {self.associations_file}\n'\
             f'object_pose_file: {self.object_pose_file}\n'\
             f'reconstruction_file: {self.reconstruction_file}\n'\
+            f'annotation_dir: {self.annotation_dir}\n'\
             f'mask_dir: {self.mask_dir}'
 
     def get_camera_info(self):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
         return CameraInfo.create(full_path)
+
+    def get_camera_info_scene(self, id):
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
+
+        full_path_scene_cam = os.path.join(
+            self.root_dir, self.scenes_dir, id, self.camera_intrinsics_file)
+
+        if os.path.exists(full_path_scene_cam):
+            return CameraInfo.create(full_path_scene_cam)
+        elif os.path.exists(full_path):
+            return CameraInfo.create(full_path)
+        else:
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), full_path)
 
     def get_object_library(self):
         return ObjectLibrary.create(self.object_library_file)
@@ -296,7 +313,7 @@ class SceneFileReader:
 
     def get_object_poses(self, id):
         full_path = os.path.join(
-            self.root_dir, self.scenes_dir, id, self.object_pose_file)
+            self.root_dir, self.annotation_dir, id, self.object_pose_file)
 
         objects = []
         with open(full_path) as fp:

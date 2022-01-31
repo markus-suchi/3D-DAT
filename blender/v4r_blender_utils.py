@@ -111,7 +111,7 @@ def load_cameras(SCENE_FILE_READER, id):
             obj_camera.rotation_euler = mathutils.Matrix(rotation).to_euler()
 
             # using blender camera with focal length in millimeters
-            camera_info = SCENE_FILE_READER.get_camera_info()
+            camera_info = SCENE_FILE_READER.get_camera_info_scene(id)
             if camera_info.sensor_width:
                 obj_camera.data.lens_unit = 'MILLIMETERS'
                 obj_camera.data.lens = camera_info.lens()
