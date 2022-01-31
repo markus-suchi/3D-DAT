@@ -17,6 +17,7 @@ def tag_redraw(context, space_type="PROPERTIES", region_type="WINDOW"):
                     if region.type == region_type:
                         region.tag_redraw()
 
+
 def tag_redraw_all():
     for area in bpy.context.screen.areas:
         area.tag_redraw()
@@ -37,7 +38,7 @@ def load_objects(SCENE_FILE_READER, id):
         for o in bpy.data.collections["objects"].objects:
             m = bpy.data.meshes[o.name]
             bpy.data.objects.remove(o, do_unlink=True)
-            if m.users < 1: 
+            if m.users < 1:
                 bpy.data.meshes.remove(m, do_unlink=True)
 
     for item in objects:
@@ -53,9 +54,11 @@ def load_objects(SCENE_FILE_READER, id):
         obj["v4r_id"] = obj_id
         bpy.data.collections["objects"].objects.link(obj)
 
+
 def set_alpha(value=0):
     for o in bpy.data.collections["objects"].objects:
         o.color[3] = value
+
 
 def load_cameras(SCENE_FILE_READER, id):
     # Removing cameras based on collection rather than name
@@ -85,7 +88,7 @@ def load_cameras(SCENE_FILE_READER, id):
     rgb = glob.glob(camera_rgb_path + "/*.png")
     rgb.sort()
 
-    #no active object
+    # no active object
     bpy.ops.object.select_all(action='DESELECT')
     if camera_poses:
         if "cameras" not in bpy.data.collections:
@@ -137,13 +140,15 @@ def load_cameras(SCENE_FILE_READER, id):
                 scene.render.resolution_x = camera_info.width
                 scene.render.resolution_y = camera_info.height
 
+
 def set_camera(camera):
     for area in bpy.context.screen.areas:
         for space in area.spaces:
             if space.type == 'VIEW_3D':
-                space.use_local_camera=True
+                space.use_local_camera = True
                 space.camera = camera
- 
+
+
 def get_cam_views():
     cam_views = []
     for area in bpy.context.screen.areas:
@@ -153,5 +158,3 @@ def get_cam_views():
                 if current_perspective == 'CAMERA':
                     cam_views.append(space.region_3d)
     return cam_views
-
-
