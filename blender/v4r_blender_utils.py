@@ -37,7 +37,8 @@ def load_objects(SCENE_FILE_READER, id):
         for o in bpy.data.collections["objects"].objects:
             m = bpy.data.meshes[o.name]
             bpy.data.objects.remove(o, do_unlink=True)
-            bpy.data.meshes.remove(m, do_unlink=True)
+            if m.users < 1: 
+                bpy.data.meshes.remove(m, do_unlink=True)
 
     for item in objects:
         mesh = item[0].mesh.as_bpy_mesh()
@@ -52,6 +53,9 @@ def load_objects(SCENE_FILE_READER, id):
         obj["v4r_id"] = obj_id
         bpy.data.collections["objects"].objects.link(obj)
 
+def set_alpha(value=0):
+    for o in bpy.data.collections["objects"].objects:
+        o.color[3] = value
 
 def load_cameras(SCENE_FILE_READER, id):
     # Removing cameras based on collection rather than name

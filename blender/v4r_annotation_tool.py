@@ -12,6 +12,15 @@ from . import v4r_blender_utils
 SCENE_FILE_READER = None
 
 
+def update_alpha(self, context):
+    v4r_infos = context.scene.v4r_infos
+    v4r_blender_utils.set_alpha(v4r_infos.color_alpha)
+
+
+def update_color_type(self, context):
+    bpy.context.space_data.shading.color_type = self.color_type
+    
+
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Scene Id",
                                    description="Identifyer for recorder scene."
@@ -23,6 +32,13 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
     scene_id: bpy.props.StringProperty(name="Scene Id")
     scene_ids: bpy.props.CollectionProperty(
         name="Scene Id List", type=V4R_PG_scene_ids)
+    color_alpha: bpy.props.FloatProperty(name="Transparency", min = 0.0, max = 1.0, 
+                                         default = 0.5,
+                                         update = update_alpha, options=set())
+    color_type :  bpy.props.EnumProperty(name="Display
+                                         items=[('OBJECT','COLOR','Object Color'),
+                                                ('VERTEX','VERTEX','Vertex Color')],
+                                         update=update_color_type, options=set())
 
 
 class V4R_OT_import_scene(bpy.types.Operator):
@@ -56,6 +72,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
                 view.view_perspective='CAMERA'
 
             bpy.context.window.cursor_set("DEFAULT")
+            update_alpha(self,context)
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -137,7 +154,6 @@ class V4R_OT_save_pose(bpy.types.Operator):
             print("You need to open the dataset file first and import a scene.")
             return {'CANCELLED'}
 
-
 class V4R_PT_annotation(bpy.types.Panel):
     bl_label = "V4R Annotation"
     bl_idname = "V4R_PT_annotation"
@@ -177,6 +193,20 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         col.prop(context.area.spaces.active,"camera", icon='CAMERA_DATA')
 
+        col.separator()
+
+        row = col.row()
+
+        row.prop(v4r_infos, "color_type", expand = True )
+
+        row = col.row()
+
+        color_alpha = row.prop(v4r_infos, "color_alpha", slider = True)
+        if v4r_infos.color_type == 'VERTEX':
+            row.enabled = False
+        else:
+            row.enabled = True
+
 def register():
     bpy.utils.register_class(V4R_PG_scene_ids)
     bpy.utils.register_class(V4R_PG_infos)
@@ -186,7 +216,6 @@ def register():
     bpy.utils.register_class(V4R_OT_save_pose)
 
     bpy.types.Scene.v4r_infos = bpy.props.PointerProperty(type=V4R_PG_infos)
-
 
 def unregister():
     bpy.utils.unregister_class(V4R_PG_scene_ids)
