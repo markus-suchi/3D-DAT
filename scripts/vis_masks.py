@@ -102,8 +102,10 @@ if __name__ == "__main__":
         oriented_models, camera_poses, model_colors, intrinsic)
 
     for pose_idx, anno_img in enumerate(annotation_imgs):
+        if np.shape(anno_img)[2] ==  3:
+            anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2RGBA)
         plt.figure(figsize=(21, 13))
-        alpha = 0.5
+        alpha = 1.
         masked_image = (
             1. - alpha) * np.asarray(orig_imgs[pose_idx]) + alpha * anno_img.astype(float)
         plt.imshow(masked_image/255.)
