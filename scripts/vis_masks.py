@@ -1,6 +1,5 @@
 import argparse
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pyrender
@@ -103,12 +102,26 @@ if __name__ == "__main__":
     annotation_imgs = project_mesh_to_2d(
         oriented_models, camera_poses, model_colors, intrinsic)
 
+    cv2.namedWindow('Object Mask Visualization',flags= cv2.WINDOW_AUTOSIZE | cv2.WINDOW_GUI_EXPANDED )
+    stop = False
     for pose_idx, anno_img in enumerate(annotation_imgs):
+        if stop or not cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE): break
+
         if np.shape(anno_img)[2] ==  3:
-            anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2RGBA)
-        plt.figure(figsize=(21, 13))
+            anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2BGRA)
         alpha = 0.5
         masked_image = (
             1. - alpha) * np.asarray(orig_imgs[pose_idx]) + alpha * anno_img.astype(float)
-        plt.imshow(masked_image/255.)
-        plt.show()
+        masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , cv2.COLOR_RGBA2BGRA)
+        blended = cv2.addWeighted(anno_img, 1-alpha, masked_image, alpha, 0)
+ 
+        cv2.imshow('Object Mask Visualization', blended)
+        while cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE):
+            key = cv2.waitKey(1)
+            if key == ord('q'):
+                cv2.destroyAllWindows()
+                stop = True
+                break
+            elif key == ord('n'):
+                break
+
