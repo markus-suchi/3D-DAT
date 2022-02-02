@@ -8,6 +8,7 @@ import os
 import yaml
 import scipy
 from scipy.spatial.transform import Rotation as R
+import math
 
 def load_pose(filepath):
     with open(filepath) as fp:
@@ -19,10 +20,34 @@ def load_pose(filepath):
             else:
                 return (id, pose)
 
+def re(R_est, R_gt):
+  """Rotational Error.
+  :param R_est: 3x3 ndarray with the estimated rotation matrix.
+  :param R_gt: 3x3 ndarray with the ground-truth rotation matrix.
+  :return: The calculated error.
+  """
+  assert (R_est.shape == R_gt.shape == (3, 3))
+  error_cos = float(0.5 * (np.trace(R_est.dot(np.linalg.inv(R_gt))) - 1.0))
+
+  # Avoid invalid values due to numerical errors.
+  error_cos = min(1.0, max(-1.0, error_cos))
+
+  error = math.acos(error_cos)
+  error = 180.0 * error / np.pi  # Convert [rad] to [deg].
+  return error
+
+def te(t_est, t_gt):
+  """Translational Error.
+  :param t_est: 3x1 ndarray with the estimated translation vector.
+  :param t_gt: 3x1 ndarray with the ground-truth translation vector.
+  :return: The calculated error.
+  """
+  assert (t_est.size == t_gt.size == 3)
+  error = np.linalg.norm(t_gt - t_est)
+  return error
+
 def evaluate(groundtruth = None, prediction = None):
-    if groundtruth == None or prediction == None:
-        print("For comparision groundtruth and prediction poses are required.")
-        return
+    assert (groundtruth and prediction is not None)
 
     gt = np.array(groundtruth).reshape(4,4)
     pre = np.array(prediction).reshape(4,4)
@@ -33,34 +58,21 @@ def evaluate(groundtruth = None, prediction = None):
     gt_rotation = R.from_matrix(gt[:3,:3])
     pre_rotation = R.from_matrix(pre[:3,:3])
 
-    # print("GT ----")
-    # print(gt)
-    # print("----")
-    # print(gt_translation)
-    # print("----")
-    # print(gt_rotation.as_matrix())
-    # print("PRE ----")
-    # print(pre)
-    # print("----")
-    # print(pre_translation)
-    # print("----")
-    # print(pre_rotation.as_matrix())
     dist = np.linalg.norm(gt_translation-pre_translation) 
  
     gt_rot_xyz = gt_rotation.as_euler('XYZ', degrees=True )
     pre_rot_xyz = pre_rotation.as_euler('XYZ', degrees=True)
-
-    # print("gt_euler_rot")
-    # print(gt_rot_xyz)
-    # print("pre_euler_rot")
-    # print(pre_rot_xyz)
-    # print("gt_euler_quat")
-    # print(gt_rotation.as_quat())
-    # print("pre_euler_quat")
-    # print(pre_rotation.as_quat())
-    rot_diff = gt_rot_xyz - pre_rot_xyz 
+    rot_diff_xyz = gt_rot_xyz - pre_rot_xyz 
+    rot_err = re(pre_rotation.as_matrix(), gt_rotation.as_matrix())
     print(f"Distance {dist}")
-    print(f"Rotation Difference: {rot_diff}")
+    print(f"Rotation Difference: {rot_diff_xyz}")
+    print(f"Rotation Error: {rot_err}")
+
+def calc_pose_error(scene_id, prediction):
+    gt_pose = scene_file_reader.get_object_poses(scene_id)
+    prediction_file = os.path.join(prediction, scene_id, scene_file_reader.object_pose_file)
+    obj_id, prediction_pose = load_pose(prediction_file) 
+    evaluate(groundtruth=gt_pose[0][1], prediction=prediction_pose)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -69,15 +81,13 @@ if __name__ == "__main__":
                         help="Path to dataset configuration.")
     parser.add_argument("-p", "--prediction", type=str, required=True,
                         help="Path to directory of prediction.")
-    parser.add_argument("-s", "--scene_id", type=str, default='',
+    parser.add_argument("-s", "--scene_id", type=str, default='', nargs='+',
                         help="Scene identifier to evaluate.")
     args = parser.parse_args()
 
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
 
-    if args.scene_id:
-        print(f'Evaluating scene {args.scene_id}:')
-        gt_pose = scene_file_reader.get_object_poses(args.scene_id)
-        prediction_file = os.path.join(args.prediction, args.scene_id, "poses.yaml")
-        obj_id, prediction_pose = load_pose(prediction_file) 
-        evaluate(groundtruth=gt_pose[0][1], prediction=prediction_pose)
+    for scene_id in args.scene_id or scene_file_reader.get_scene_ids():
+        print(f'Evaluating scene {scene_id}:')
+        calc_pose_error(scene_id, args.prediction)
+
