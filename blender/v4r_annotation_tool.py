@@ -74,6 +74,8 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
             bpy.context.window.cursor_set("DEFAULT")
             update_alpha(self, context)
+            # set to vertex color
+            context.scene.v4r_infos.color_type = "VERTEX"
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
