@@ -1,3 +1,6 @@
+# From https://github.com/marian42/mesh_to_sdf
+# Marian Kleineberg
+
 ### Wrapper around the pyrender library that allows to
 ### 1. disable antialiasing
 ### 2. render a normal buffer
