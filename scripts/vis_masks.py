@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
     camera_poses = scene_file_reader.get_camera_poses(args.scene_id)
-    intrinsic = scene_file_reader.get_camera_info()
+    intrinsic = scene_file_reader.get_camera_info_scene(args.scene_id)
     objects = scene_file_reader.get_object_poses(args.scene_id)
     object_library = scene_file_reader.get_object_library()
 
@@ -109,10 +109,12 @@ if __name__ == "__main__":
 
         if np.shape(anno_img)[2] ==  3:
             anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2BGRA)
+
+        convert_flag = cv2.COLOR_RGBA2BGRA
+        if np.shape(orig_imgs[pose_idx])[2] ==  3:
+            convert_flag = cv2.COLOR_RGB2BGRA
+        masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , convert_flag)
         alpha = 0.5
-        masked_image = (
-            1. - alpha) * np.asarray(orig_imgs[pose_idx]) + alpha * anno_img.astype(float)
-        masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , cv2.COLOR_RGBA2BGRA)
         blended = cv2.addWeighted(anno_img, 1-alpha, masked_image, alpha, 0)
  
         cv2.imshow('Object Mask Visualization', blended)
