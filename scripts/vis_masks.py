@@ -1,16 +1,18 @@
+
 import argparse
 import cv2
 import numpy as np
 import os
-import pyrender
 from tqdm import tqdm
 import trimesh
 import yaml
 import open3d as o3d
 import copy
-
 import v4r_dataset_toolkit as v4r
-
+#This needs to be imported before pyrender to disable
+# antialiasing in mask generation
+from v4r_dataset_toolkit import pyrender_wrapper
+import pyrender
 
 groundtruth_to_pyrender = np.array([[1, 0, 0, 0],
                                     [0, -1, 0, 0],
@@ -57,9 +59,10 @@ def project_mesh_to_2d(models, cam_poses, model_colors, intrinsic):
         scene.set_pose(nl, pose=cam_pose)
 
         img, depth = r.render(
-            scene, flags=pyrender.RenderFlags.SKIP_CULL_FACES | pyrender.RenderFlags.FLAT)
+            scene, 
+            flags=pyrender.RenderFlags.SKIP_CULL_FACES | 
+            pyrender.RenderFlags.FLAT)
         renders.append(img)
-
     return renders
 
 
@@ -82,6 +85,8 @@ if __name__ == "__main__":
                         help="Path to reconstructed data")
     parser.add_argument("-s", "--scene_id", type=str, required=True,
                         help="Scene identifier to visualize.")
+    parser.add_argument("-b", "--background", action='store_true',
+                        help="Enable scene background.") 
     args = parser.parse_args()
 
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
@@ -110,13 +115,16 @@ if __name__ == "__main__":
         if np.shape(anno_img)[2] ==  3:
             anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2BGRA)
 
-        convert_flag = cv2.COLOR_RGBA2BGRA
-        if np.shape(orig_imgs[pose_idx])[2] ==  3:
-            convert_flag = cv2.COLOR_RGB2BGRA
-        masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , convert_flag)
-        alpha = 0.5
-        blended = cv2.addWeighted(anno_img, 1-alpha, masked_image, alpha, 0)
- 
+        if(args.background):
+            convert_flag = cv2.COLOR_RGBA2BGRA
+            if np.shape(orig_imgs[pose_idx])[2] ==  3:
+                convert_flag = cv2.COLOR_RGB2BGRA
+            masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , convert_flag)
+            alpha = 0.5
+            blended = cv2.addWeighted(anno_img, 1-alpha, masked_image, alpha, 0)
+        else:
+            blended = anno_img
+     
         cv2.imshow('Object Mask Visualization', blended)
         while cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE):
             key = cv2.waitKey(1)
