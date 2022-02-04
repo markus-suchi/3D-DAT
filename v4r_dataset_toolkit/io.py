@@ -276,22 +276,30 @@ class SceneFileReader:
         return [Pose(line.strip().split()[1:], wxyz=False) for line in pose_lines]
 
     def get_images_rgb(self, id):
+        files = self.get_images_rgb_path(id)
+        return [o3d.io.read_image(file) for file in files]
+
+    def get_images_rgb_path(self, id):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.rgb_dir)
 
         extensions = ('.png', '.jpg')
         files = get_file_list(full_path, extensions)
         files.sort()
-        return [o3d.io.read_image(file) for file in files]
+        return files
 
     def get_images_depth(self, id):
+        files = self.get_images_dept_path(id)
+        return [o3d.io.read_image(file) for file in files]
+
+    def get_images_depth_path(self, id):
         full_path = os.path.join(
             self.root_dir, self.scenes_dir, id, self.depth_dir)
 
         extensions = ('.png')
         files = get_file_list(full_path, extensions)
         files.sort()
-        return [o3d.io.read_image(file) for file in files]
+        return files 
 
     def get_pointclouds(self, id):
         # return rgbd image reader which does not load images right away?
