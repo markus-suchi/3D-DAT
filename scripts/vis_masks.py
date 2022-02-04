@@ -10,7 +10,7 @@ import yaml
 import open3d as o3d
 import copy
 import v4r_dataset_toolkit as v4r
-#This needs to be imported before pyrender to disable
+# This needs to be imported before pyrender to disable
 # antialiasing in mask generation
 from v4r_dataset_toolkit import pyrender_wrapper
 import pyrender
@@ -19,6 +19,7 @@ groundtruth_to_pyrender = np.array([[1, 0, 0, 0],
                                     [0, -1, 0, 0],
                                     [0, 0, -1, 0],
                                     [0, 0, 0, 1]])
+
 
 def project_mesh_to_2d(models, cam_poses, model_colors, intrinsic):
     # --- PyRender scene setup ------------------------------------------------
@@ -57,8 +58,8 @@ def project_mesh_to_2d(models, cam_poses, model_colors, intrinsic):
         scene.set_pose(nl, pose=cam_pose)
 
         img, depth = r.render(
-            scene, 
-            flags=pyrender.RenderFlags.SKIP_CULL_FACES | 
+            scene,
+            flags=pyrender.RenderFlags.SKIP_CULL_FACES |
             pyrender.RenderFlags.FLAT)
         renders.append(img)
     return renders
@@ -84,19 +85,17 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--scene_id", type=str, required=True,
                         help="Scene identifier to visualize.")
     parser.add_argument("-b", "--background", action='store_true',
-                        help="Enable scene background.") 
+                        help="Enable scene background.")
     parser.add_argument("-a", "--alpha", type=float, default=0.5,
-                        help="Overlay alpha for scene background.") 
+                        help="Overlay alpha for scene background.")
     parser.add_argument("-o", "--output", type=str, default='',
                         help="Output directory for masked images.")
     args = parser.parse_args()
-
 
     if args.output:
         if not os.path.exists(args.output):
             print(f"Output path {args.output} does not exist.")
             sys.exit()
-        
 
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
     camera_poses = scene_file_reader.get_camera_poses(args.scene_id)
@@ -114,27 +113,31 @@ if __name__ == "__main__":
     orig_imgs = scene_file_reader.get_images_rgb(args.scene_id)
     camera_poses = [pose.tf for pose in camera_poses]
     annotation_imgs = project_mesh_to_2d(
-    oriented_models, camera_poses, model_colors, intrinsic)
+        oriented_models, camera_poses, model_colors, intrinsic)
 
     if not args.output:
-        cv2.namedWindow('Object Mask Visualization',flags= cv2.WINDOW_AUTOSIZE | cv2.WINDOW_GUI_EXPANDED )
+        cv2.namedWindow('Object Mask Visualization',
+                        flags=cv2.WINDOW_AUTOSIZE | cv2.WINDOW_GUI_EXPANDED)
         stop = False
         for pose_idx, anno_img in enumerate(annotation_imgs):
-            if stop or not cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE): break
+            if stop or not cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE):
+                break
 
-            if np.shape(anno_img)[2] ==  3:
-                anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2BGRA)
+            if np.shape(anno_img)[2] == 3:
+                anno_img = cv2.cvtColor(anno_img, cv2.COLOR_RGB2BGRA)
 
             if(args.background):
                 convert_flag = cv2.COLOR_RGBA2BGRA
-                if np.shape(orig_imgs[pose_idx])[2] ==  3:
+                if np.shape(orig_imgs[pose_idx])[2] == 3:
                     convert_flag = cv2.COLOR_RGB2BGRA
-                masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , convert_flag)
+                masked_image = cv2.cvtColor(np.asarray(
+                    orig_imgs[pose_idx]), convert_flag)
                 alpha = args.alpha
-                blended = cv2.addWeighted(anno_img, 1-alpha, masked_image, alpha, 0)
+                blended = cv2.addWeighted(
+                    anno_img, 1-alpha, masked_image, alpha, 0)
             else:
                 blended = anno_img
-         
+
             cv2.imshow('Object Mask Visualization', blended)
             while cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE):
                 key = cv2.waitKey(1)
@@ -148,11 +151,12 @@ if __name__ == "__main__":
         filepaths = scene_file_reader.get_images_rgb_path(args.scene_id)
         pbar = tqdm(enumerate(annotation_imgs), desc=f"Saving")
         for pose_idx, anno_img in pbar:
-            if np.shape(anno_img)[2] ==  3:
-                anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGB2GRAY)
+            if np.shape(anno_img)[2] == 3:
+                anno_img = cv2.cvtColor(anno_img, cv2.COLOR_RGB2GRAY)
             else:
-                anno_img =  cv2.cvtColor(anno_img, cv2.COLOR_RGBA2GRAY)
+                anno_img = cv2.cvtColor(anno_img, cv2.COLOR_RGBA2GRAY)
             ret, anno_img = cv2.threshold(anno_img, 0, 255, cv2.THRESH_BINARY)
-            output_path = os.path.join(args.output, os.path.basename(filepaths[pose_idx]))
+            output_path = os.path.join(
+                args.output, os.path.basename(filepaths[pose_idx]))
             pbar.set_description(f"Saving: {output_path}")
             cv2.imwrite(output_path, anno_img)
