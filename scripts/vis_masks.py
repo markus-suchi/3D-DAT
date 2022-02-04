@@ -85,6 +85,8 @@ if __name__ == "__main__":
                         help="Scene identifier to visualize.")
     parser.add_argument("-b", "--background", action='store_true',
                         help="Enable scene background.") 
+    parser.add_argument("-a", "--alpha", type=float, default=0.5,
+                        help="Overlay alpha for scene background.") 
     parser.add_argument("-o", "--output", type=str, default='',
                         help="Output directory for masked images.")
     args = parser.parse_args()
@@ -128,7 +130,7 @@ if __name__ == "__main__":
                 if np.shape(orig_imgs[pose_idx])[2] ==  3:
                     convert_flag = cv2.COLOR_RGB2BGRA
                 masked_image = cv2.cvtColor(np.asarray(orig_imgs[pose_idx]) , convert_flag)
-                alpha = 0.5
+                alpha = args.alpha
                 blended = cv2.addWeighted(anno_img, 1-alpha, masked_image, alpha, 0)
             else:
                 blended = anno_img
