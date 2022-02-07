@@ -289,7 +289,7 @@ class SceneFileReader:
         return files
 
     def get_images_depth(self, id):
-        files = self.get_images_dept_path(id)
+        files = self.get_images_depth_path(id)
         return [o3d.io.read_image(file) for file in files]
 
     def get_images_depth_path(self, id):

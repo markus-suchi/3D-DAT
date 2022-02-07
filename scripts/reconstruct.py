@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     color_files = scene_file_reader.get_images_rgb(args.scene_id)
     depth_files = scene_file_reader.get_images_depth(args.scene_id)
-    intrinsic = scene_file_reader.get_camera_info().as_o3d()
+    intrinsic = scene_file_reader.get_camera_info_scene(args.scene_id).as_o3d()
     poses = scene_file_reader.get_camera_poses(args.scene_id)
 
     reconstructor = v4r.reconstructor.Reconstructor(config=CONFIG, 

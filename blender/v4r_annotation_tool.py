@@ -152,6 +152,7 @@ class V4R_OT_save_pose(bpy.types.Operator):
             if output_list:
                 with open(full_path, 'w') as f:
                     yaml.dump(output_list, f, default_flow_style=False)
+                    self.report({'INFO'},"Saving successful")
             return {'FINISHED'}
         else:
             print("You need to open the dataset file first and import a scene.")
