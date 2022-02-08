@@ -11,16 +11,6 @@ from scipy.spatial.transform import Rotation as R
 import math
 import glob
 
-def load_pose(filepath):
-    with open(filepath) as fp:
-        for items in (yaml.load(fp, Loader=yaml.FullLoader)):
-            id = items.get("id")
-            pose = items.get("pose")
-            if not pose:
-                print(f"No pose in file {filepath}")
-            else:
-                return (id, pose)
-
 def re(R_est, R_gt):
   """Rotational Error.
   :param R_est: 3x3 ndarray with the estimated rotation matrix.
@@ -76,6 +66,13 @@ def calc_pose_error(scene_id, prediction):
     obj_id, prediction_pose = load_pose(prediction_file) 
     evaluate(groundtruth=gt_pose[0][1], prediction=prediction_pose)
 
+import numpy as np
+import csv
+
+def load_data(input_file):
+    with open(input_file, 'r') as fp:
+        return list(csv.reader(fp))
+
 def create_statistic_data(annotation_path, output_file):
     ids = scene_file_reader.get_scene_ids()
     
@@ -87,31 +84,47 @@ def create_statistic_data(annotation_path, output_file):
                 obj_id, pose = load_pose(prediction_file) 
                 pose_matrix = np.array(pose).reshape(4,4)
                 location = pose_matrix[:3,3]
-                rot_matrix = pose_matrix[:3,:3]
-                rot = R.from_matrix(rot_matrix)
+                rot = R.from_matrix(pose_matrix[:3,:3])
                 rot_xyz = rot.as_euler('XYZ', degrees=True)
-                eval_string = (f"{user},{id},{location[0]},{location[1]}, {location[2]},"
-                f"{rot_xyz[0]},{rot_xyz[1]},{rot_xyz[2]}\n") 
-                fp.write(f"{eval_string}") 
+                print(f"{user}, {id}, {location}, {rot_xyz}") 
+                fp.write(f"{user}, {id}, {location}, {rot_xyz}\n") 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        "Visualize annotated data.")
-    parser.add_argument("-c", "--config", type=str, required=True,
-                        help="Path to dataset configuration.")
-    parser.add_argument("-p", "--prediction", type=str, required=True,
-                        help="Path to directory of prediction.")
-    parser.add_argument("-s", "--scene_id", type=str, default='', nargs='+',
-                        help="Scene identifier to evaluate.")
-    parser.add_argument("-o", "--output_file", type=str, default='',
-                        help="Scene identifier to evaluate.")
+        "Create User Study Evaluation.")
+    parser.add_argument("-i", "--input_file", type=str, default='statistics.txt',
+                        help="Input data file.")
+    parser.add_argument("-o", "--output_file", type=str, default='statistics.txt',
+                        help="Output data file")
     args = parser.parse_args()
 
-    scene_file_reader = v4r.io.SceneFileReader.create(args.config)
+    data = load_data(args.input_file)
+    np_data = np.asarray(data)
 
-    if not args.output_file:
-        for scene_id in args.scene_id or scene_file_reader.get_scene_ids():
-            print(f'Evaluating scene {scene_id}:')
-            calc_pose_error(scene_id, args.prediction)
-    else:
-        create_statistic_data(args.prediction, args.output_file)
+    # calculate mean location for each scene
+    scenes = np.unique(np_data[:,1])
+    for scene in scenes:
+        scene_data = np_data[np.where(np_data[:,1]==scene)]
+        #translation
+        location = np.asarray(scene_data[:,2:5]).astype(float)
+        rotation = np.asarray(scene_data[:,5:]).astype(float)
+        mean = np.mean(location,axis=0)
+        std = np.std(location,axis=0)
+        #rotation
+        mean_rot = np.mean(rotation,axis=0)
+        std_rot = np.std(rotation,axis=0)
+        print(f"{scene},{mean},{std},{mean_rot},{std_rot}")
+        for idx, item in enumerate(location):
+            dist = te(location[idx], mean)
+            print(f'user_{idx},{dist*1000}')
+        
+
+    # user_data = np_data[np.where(np_data[:,0]=='02_user')]
+    # print("User")
+    # for entry in user_data:
+        # print(entry)
+    # scene_data = np_data[np.where(np_data[:,1]=='01_tutorial')]
+    # print("Scene:")
+    # for entry in scene_data:
+        # print(entry)
+    
