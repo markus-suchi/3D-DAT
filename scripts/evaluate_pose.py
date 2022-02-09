@@ -78,8 +78,6 @@ def calc_pose_error(scene_id, prediction):
 
 def create_statistic_data(annotation_path, output_file):
     ids = scene_file_reader.get_scene_ids()
-    
-    user_data = {}
     with open(output_file, 'w') as fp:
         for user in os.listdir(annotation_path):
             for id in ids:
