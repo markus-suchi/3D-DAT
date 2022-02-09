@@ -51,12 +51,9 @@ def evaluate(groundtruth = None, prediction = None):
 
     dist = np.linalg.norm(gt_translation-pre_translation) 
  
-    gt_rot_xyz = gt_rotation.as_euler('XYZ', degrees=True )
-    pre_rot_xyz = pre_rotation.as_euler('XYZ', degrees=True)
     rot_diff_xyz = gt_rot_xyz - pre_rot_xyz 
     rot_err = re(pre_rotation.as_matrix(), gt_rotation.as_matrix())
     print(f"Distance {dist}")
-    print(f"Rotation Difference: {rot_diff_xyz}")
     print(f"Rotation Error: {rot_err}")
     return dist, rot_diff_xyz, rot_err
 
@@ -106,25 +103,14 @@ if __name__ == "__main__":
     for scene in scenes:
         scene_data = np_data[np.where(np_data[:,1]==scene)]
         #translation
+        users = scene_data[:,0]
         location = np.asarray(scene_data[:,2:5]).astype(float)
-        rotation = np.asarray(scene_data[:,5:]).astype(float)
+        rotation = np.asarray(scene_data[:,5:]).astype(float).reshape(-1,3,3)
         mean = np.mean(location,axis=0)
         std = np.std(location,axis=0)
         #rotation
-        mean_rot = np.mean(rotation,axis=0)
-        std_rot = np.std(rotation,axis=0)
-        print(f"{scene},{mean},{std},{mean_rot},{std_rot}")
-        for idx, item in enumerate(location):
+        mean_rot = R.from_matrix(rotation).mean().as_matrix().reshape(3,3)
+        for idx, item in enumerate(scene_data):
             dist = te(location[idx], mean)
-            print(f'user_{idx},{dist*1000}')
-        
-
-    # user_data = np_data[np.where(np_data[:,0]=='02_user')]
-    # print("User")
-    # for entry in user_data:
-        # print(entry)
-    # scene_data = np_data[np.where(np_data[:,1]=='01_tutorial')]
-    # print("Scene:")
-    # for entry in scene_data:
-        # print(entry)
-    
+            rot_err = re(rotation[idx], mean_rot)
+            print(f'{scene},{users[idx]},{dist*1000},{rot_err}')

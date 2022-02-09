@@ -61,36 +61,30 @@ def evaluate(groundtruth = None, prediction = None):
 
     dist = np.linalg.norm(gt_translation-pre_translation) 
  
-    gt_rot_xyz = gt_rotation.as_euler('XYZ', degrees=True )
-    pre_rot_xyz = pre_rotation.as_euler('XYZ', degrees=True)
-    rot_diff_xyz = gt_rot_xyz - pre_rot_xyz 
     rot_err = re(pre_rotation.as_matrix(), gt_rotation.as_matrix())
-    print(f"Distance {dist}")
-    print(f"Rotation Difference: {rot_diff_xyz}")
-    print(f"Rotation Error: {rot_err}")
-    return dist, rot_diff_xyz, rot_err
+    return dist, rot_err
 
 def calc_pose_error(scene_id, prediction):
     gt_pose = scene_file_reader.get_object_poses(scene_id)
     prediction_file = os.path.join(prediction, scene_id, scene_file_reader.object_pose_file)
     obj_id, prediction_pose = load_pose(prediction_file) 
-    evaluate(groundtruth=gt_pose[0][1], prediction=prediction_pose)
+    return evaluate(groundtruth=gt_pose[0][1], prediction=prediction_pose)
 
 def create_statistic_data(annotation_path, output_file):
+    fmt_str = '%s,%s' + ',%s'*12
     ids = scene_file_reader.get_scene_ids()
     with open(output_file, 'w') as fp:
-        for user in os.listdir(annotation_path):
+        for user in sorted(os.listdir(annotation_path)):
             for id in ids:
                 prediction_file = os.path.join(annotation_path, user, id, 'poses.yaml') 
                 obj_id, pose = load_pose(prediction_file) 
                 pose_matrix = np.array(pose).reshape(4,4)
                 location = pose_matrix[:3,3]
-                rot_matrix = pose_matrix[:3,:3]
-                rot = R.from_matrix(rot_matrix)
-                rot_xyz = rot.as_euler('XYZ', degrees=True)
-                eval_string = (f"{user},{id},{location[0]},{location[1]}, {location[2]},"
-                f"{rot_xyz[0]},{rot_xyz[1]},{rot_xyz[2]}\n") 
-                fp.write(f"{eval_string}") 
+                rotation = pose_matrix[:3,:3]
+                arr = np.array([user,id])
+                arr = np.hstack((arr, location.flatten()))
+                arr = np.hstack((arr, rotation.flatten()))
+                np.savetxt(fp, [arr], fmt=fmt_str, delimiter=",")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -103,13 +97,17 @@ if __name__ == "__main__":
                         help="Scene identifier to evaluate.")
     parser.add_argument("-o", "--output_file", type=str, default='',
                         help="Scene identifier to evaluate.")
+    parser.add_argument("-u", "--user", type=str, default='', nargs='+',
+                        help="User name.")
     args = parser.parse_args()
 
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
 
     if not args.output_file:
         for scene_id in args.scene_id or scene_file_reader.get_scene_ids():
-            print(f'Evaluating scene {scene_id}:')
-            calc_pose_error(scene_id, args.prediction)
+            for user in args.user:
+                prediction = os.path.join(args.prediction,user)
+                dist, rot = calc_pose_error(scene_id, prediction)
+                print(f"{user}, {scene_id}, {dist*1000}, {rot}")
     else:
         create_statistic_data(args.prediction, args.output_file)
