@@ -52,6 +52,7 @@ def load_objects(SCENE_FILE_READER, id):
         r, g, b = item[0].color
         obj.color = (r/255., g/255., b/255., 1)
         obj["v4r_id"] = obj_id
+        obj.lock_scale = [True, True, True]
         bpy.data.collections["objects"].objects.link(obj)
 
 
