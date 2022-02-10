@@ -10,6 +10,9 @@ import scipy
 from scipy.spatial.transform import Rotation as R
 import math
 import glob
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 def re(R_est, R_gt):
   """Rotational Error.
@@ -93,24 +96,70 @@ if __name__ == "__main__":
                         help="Input data file.")
     parser.add_argument("-o", "--output_file", type=str, default='statistics.txt',
                         help="Output data file")
+    parser.add_argument("-g", "--groundtruth", action='store_true',
+                        help="Groundtruth from synthetic data.")
     args = parser.parse_args()
 
     data = load_data(args.input_file)
     np_data = np.asarray(data)
 
-    # calculate mean location for each scene
-    scenes = np.unique(np_data[:,1])
-    for scene in scenes:
-        scene_data = np_data[np.where(np_data[:,1]==scene)]
-        #translation
-        users = scene_data[:,0]
-        location = np.asarray(scene_data[:,2:5]).astype(float)
-        rotation = np.asarray(scene_data[:,5:]).astype(float).reshape(-1,3,3)
-        mean = np.mean(location,axis=0)
-        std = np.std(location,axis=0)
-        #rotation
-        mean_rot = R.from_matrix(rotation).mean().as_matrix().reshape(3,3)
-        for idx, item in enumerate(scene_data):
-            dist = te(location[idx], mean)
-            rot_err = re(rotation[idx], mean_rot)
-            print(f'{scene},{users[idx]},{dist*1000},{rot_err}')
+
+    if not args.groundtruth:
+        # calculate mean location for each scene
+        data = []
+        scenes = np.unique(np_data[:,1])
+        for scene in scenes:
+            scene_data = np_data[np.where(np_data[:,1]==scene)]
+            #translation
+            users = scene_data[:,0]
+            location = np.asarray(scene_data[:,2:5]).astype(float)
+            rotation = np.asarray(scene_data[:,5:]).astype(float).reshape(-1,3,3)
+            mean = np.mean(location,axis=0)
+            std = np.std(location,axis=0)
+            #rotation
+            mean_rot = R.from_matrix(rotation).mean().as_matrix().reshape(3,3)
+            for idx, item in enumerate(scene_data):
+                dist = te(location[idx], mean)
+                rot_err = re(rotation[idx], mean_rot)
+                data.append([users[idx], scene, dist*1000, rot_err])
+    else:
+        data = []
+        scenes = np.unique(np_data[:,1])
+        for scene in scenes:
+            scene_data = np_data[np.where(np_data[:,1]==scene)]
+            #translation
+            users = scene_data[:,0]
+            for idx, item in enumerate(scene_data):
+                data.append([users[idx], scene, scene_data[idx,2].astype(float), scene_data[idx,3].astype(float)])
+
+    df = pd.DataFrame(data, columns = ['user', 'scene', 'dist', 'rot_err'])
+    print(df)
+
+    # User 
+    fig, ax = plt.subplots()
+    df_long = pd.melt(df, id_vars = ['user'], value_vars = ['dist','rot_err'], var_name = ['scene'])
+    ax = sns.boxplot(data=df_long,x='value', y='user', hue='scene', fliersize=1,palette="Reds", width = 0.5,
+                     medianprops=dict(color="red", alpha=0.7), linewidth=0.7)
+ 
+    # df.boxplot(column=['dist', 'rot_err'],
+               # by=['scene'], ax=ax)
+    
+    plt.suptitle("User", )
+    save_path = "/home/markus/temp/3DSADT-user.png"
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+
+
+    # Scene 
+    fig, ax = plt.subplots()
+    df_long = pd.melt(df, id_vars = ['scene'], value_vars = ['dist','rot_err'], var_name = ['user'])
+    ax = sns.boxplot(data=df_long,x='value', y='scene', hue='user', fliersize=1,palette="Blues", width = 0.5,
+                     medianprops=dict(color="red", alpha=0.7), linewidth=0.7)
+                #print(f'{scene},{users[idx]},{dist*1000},{rot_err}')
+    # df.boxplot(column=['dist', 'rot_err'],
+               # by=['user'], ax=ax)
+    plt.suptitle("Scene")
+    save_path = "/home/markus/temp/3DSADT-scene.png"
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+

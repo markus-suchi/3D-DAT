@@ -10,6 +10,7 @@ import scipy
 from scipy.spatial.transform import Rotation as R
 import math
 import glob
+import matplotlib.pyplot as plt
 
 def load_pose(filepath):
     with open(filepath) as fp:
@@ -108,6 +109,6 @@ if __name__ == "__main__":
             for user in args.user:
                 prediction = os.path.join(args.prediction,user)
                 dist, rot = calc_pose_error(scene_id, prediction)
-                print(f"{user}, {scene_id}, {dist*1000}, {rot}")
+                print(f"{user},{scene_id},{dist*1000},{rot}")
     else:
         create_statistic_data(args.prediction, args.output_file)
