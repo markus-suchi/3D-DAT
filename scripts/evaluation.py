@@ -122,6 +122,15 @@ if __name__ == "__main__":
                 dist = te(location[idx], mean)
                 rot_err = re(rotation[idx], mean_rot)
                 data.append([users[idx], scene, dist*1000, rot_err])
+
+            # write out means for visualization
+            mean_pose = np.eye(4)
+            mean_pose[:3,:3] = mean_rot
+            mean_pose[:3,3] = mean
+            mean_file = (f"/home/markus/temp/mean_ano2/{scene}/poses.yaml")
+            os.makedirs(os.path.dirname(mean_file), exist_ok=True)
+            with open(mean_file, 'w') as fp:
+                yaml.dump([{"id": 1, "pose": mean_pose.reshape(-1).tolist()}], fp, default_flow_style=False)
     else:
         data = []
         scenes = np.unique(np_data[:,1])
