@@ -130,7 +130,7 @@ if __name__ == "__main__":
         mean_pose = np.eye(4)
         mean_pose[:3,:3] = mean_rot
         mean_pose[:3,3] = mean
-        mean_file = os.path.join(args.output_dir,scene,"poses.yaml")
+        mean_file = os.path.join(args.output_dir,'mean_user', scene,"poses.yaml")
         os.makedirs(os.path.dirname(mean_file), exist_ok=True)
         with open(mean_file, 'w') as fp:
             yaml.dump([{"id": int(object_id), "pose": mean_pose.reshape(-1).tolist()}], fp, default_flow_style=False)
