@@ -65,14 +65,14 @@ def evaluate(groundtruth = None, prediction = None):
     rot_err = re(pre_rotation.as_matrix(), gt_rotation.as_matrix())
     return dist, rot_err
 
-def calc_pose_error(scene_id, prediction):
+def calc_groundtruth_data(scene_id, prediction):
     gt_pose = scene_file_reader.get_object_poses(scene_id)
     prediction_file = os.path.join(prediction, scene_id, scene_file_reader.object_pose_file)
     obj_id, prediction_pose = load_pose(prediction_file) 
     return evaluate(groundtruth=gt_pose[0][1], prediction=prediction_pose)
 
-def create_statistic_data(annotation_path, output_file):
-    fmt_str = '%s,%s' + ',%s'*12
+def create_consent_data(annotation_path, output_file):
+    fmt_str = '%s'+',%s'*14
     ids = scene_file_reader.get_scene_ids()
     with open(output_file, 'w') as fp:
         for user in sorted(os.listdir(annotation_path)):
@@ -82,10 +82,21 @@ def create_statistic_data(annotation_path, output_file):
                 pose_matrix = np.array(pose).reshape(4,4)
                 location = pose_matrix[:3,3]
                 rotation = pose_matrix[:3,:3]
-                arr = np.array([user,id])
+                arr = np.array([user,id, obj_id])
                 arr = np.hstack((arr, location.flatten()))
                 arr = np.hstack((arr, rotation.flatten()))
                 np.savetxt(fp, [arr], fmt=fmt_str, delimiter=",")
+
+def create_groundtruth_data(scenes, prediction_path, output_file):
+    fmt_str = '%s'+',%s'*3
+    with open(output_file, 'w') as fp:
+        for scene_id in scenes:
+            for user in sorted(os.listdir(prediction_path)):
+                prediction = os.path.join(prediction_path,user)
+                dist, rot = calc_groundtruth_data(scene_id, prediction)
+                arr = np.array([user,scene_id,dist,rot])
+                np.savetxt(fp, [arr], fmt=fmt_str, delimiter=",")
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -94,21 +105,18 @@ if __name__ == "__main__":
                         help="Path to dataset configuration.")
     parser.add_argument("-p", "--prediction", type=str, required=True,
                         help="Path to directory of prediction.")
-    parser.add_argument("-s", "--scene_id", type=str, default='', nargs='+',
-                        help="Scene identifier to evaluate.")
-    parser.add_argument("-o", "--output_file", type=str, default='',
-                        help="Scene identifier to evaluate.")
-    parser.add_argument("-u", "--user", type=str, default='', nargs='+',
-                        help="User name.")
+    parser.add_argument("-o", "--output_dir", type=str, default='',
+                        help="Output directory.")
     args = parser.parse_args()
 
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
 
-    if not args.output_file:
-        for scene_id in args.scene_id or scene_file_reader.get_scene_ids():
-            for user in args.user:
-                prediction = os.path.join(args.prediction,user)
-                dist, rot = calc_pose_error(scene_id, prediction)
-                print(f"{user},{scene_id},{dist*1000},{rot}")
-    else:
-        create_statistic_data(args.prediction, args.output_file)
+    groundtruth_scenes = ['01_tutorial', '02_mustard', '03_mug', '04_spam_can', '05_scissors']
+    real_scenes = ['06_drill_real', '07_mustard_real', '08_bleach_real', '09_mug_real']
+
+
+    gt_file = os.path.join(args.output_dir, 'statistics_gt.txt')
+    create_groundtruth_data(groundtruth_scenes, args.prediction, gt_file) 
+    consent_file = os.path.join(args.output_dir, 'statistics_consent.txt')
+    create_consent_data(args.prediction, consent_file)
+
