@@ -154,27 +154,28 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     df_long = pd.melt(df, id_vars=['user'], value_vars=[
                       'translation [mm]', 'rotation [degrees]'], var_name=['scene'])
-    ax = sns.boxplot(data=df_long, x='value', y='user', hue='scene', fliersize=1, palette="Blues", width=0.5,
+    ax = sns.boxplot(data=df_long, x='user', y='value', hue='scene', fliersize=1, palette="Blues", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
     plt.suptitle("Annotation Agreement per User")
     ax.get_legend().set_title('')
     ax.set(xlabel="error")
     save_file = os.path.join(args.output_dir, '01_3DSADT-user-consent.png')
     plt.tight_layout()
-    plt.savefig(save_file, dpi=300)
+    plt.savefig(save_file, bbox_inches='tight', dpi=300)
 
     # Scene
     fig, ax = plt.subplots()
     df_long = pd.melt(df, id_vars=['scene'], value_vars=[
                       'translation [mm]', 'rotation [degrees]'], var_name=['user'])
-    ax = sns.boxplot(data=df_long, x='value', y='scene', hue='user', fliersize=1, palette="Blues", width=0.5,
+    ax = sns.boxplot(data=df_long, x='scene', y='value', hue='user', fliersize=1, palette="Blues", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
     plt.suptitle("Annotation Agreement per Scene")
     ax.get_legend().set_title('')
     ax.set(xlabel="error")
     save_file = os.path.join(args.output_dir, '02_3DSADT-scene-consent.png')
     plt.tight_layout()
-    plt.savefig(save_file, dpi=300)
+    plt.savefig(save_file, bbox_inches='tight', dpi=300)
+
 
     # Scene consent synthetic vs real
     df = pd.DataFrame(data, columns=[
@@ -185,14 +186,15 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     df_long = pd.melt(df, id_vars=['scene'], value_vars=[
                       'translation [mm]', 'rotation [degrees]'], var_name=['user'])
-    ax = sns.boxplot(data=df_long, x='value', y='scene', hue='user', fliersize=0, palette="Blues", width=0.5,
+    ax = sns.boxplot(data=df_long, x='scene', y='value', hue='user', fliersize=0, palette="Blues", width=0.3, 
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto)
     plt.suptitle("Annotation Agreement Syntetic vs. Real Scenes")
     ax.get_legend().set_title('')
     ax.set(xlabel="error")
+    ax.set_aspect(0.5)
     save_file = os.path.join(args.output_dir, '03_3DSADT-scene-synt_real.consent.png')
     plt.tight_layout()
-    plt.savefig(save_file, dpi=300)
+    plt.savefig(save_file, bbox_inches='tight', dpi=300)
 
 
     # Groundtruth data plots
@@ -219,27 +221,28 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     df_long = pd.melt(df, id_vars=['user'], value_vars=[
                       'translation [mm]', 'rotation [degrees]'], var_name=['scene'])
-    ax = sns.boxplot(data=df_long, x='value', y='user', hue='scene', fliersize=1, palette="Greens", width=0.5,
+    ax = sns.boxplot(data=df_long, x='user', y='value', hue='scene', fliersize=1, palette="Greens", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
     plt.suptitle("Annotation Error to Synthetic Groundtruth per User", )
     ax.get_legend().set_title('')
     ax.set(xlabel="error")
     save_file = os.path.join(args.output_dir, '04_3DSADT-user-gt.png')
     plt.tight_layout()
-    plt.savefig(save_file, dpi=300)
+    plt.savefig(save_file, bbox_inches='tight', dpi=300)
+
 
     # Scene
     fig, ax = plt.subplots()
     df_long = pd.melt(df, id_vars=['scene'], value_vars=[
                       'translation [mm]', 'rotation [degrees]'], var_name=['user'])
-    ax = sns.boxplot(data=df_long, x='value', y='scene', hue='user', fliersize=1, palette="Greens", width=0.5,
+    ax = sns.boxplot(data=df_long, x='scene', y='value', hue='user', fliersize=1, palette="Greens", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
     plt.suptitle("Annotation Error to Synthetic Groundtruth per Scene")
     ax.get_legend().set_title('')
     ax.set(xlabel="error")
     save_file = os.path.join(args.output_dir, '05_3DSADT-scene-gt.png')
     plt.tight_layout()
-    plt.savefig(save_file, dpi=300)    
+    plt.savefig(save_file, bbox_inches='tight', dpi=300)
 
 
 
