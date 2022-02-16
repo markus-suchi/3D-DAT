@@ -160,7 +160,7 @@ class V4R_OT_save_pose(bpy.types.Operator):
 
 
 class V4R_PT_annotation(bpy.types.Panel):
-    bl_label = "V4R Annotation"
+    bl_label = "3D-SADT"
     bl_idname = "V4R_PT_annotation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
