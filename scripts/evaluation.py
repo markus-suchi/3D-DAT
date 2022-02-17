@@ -114,7 +114,9 @@ if __name__ == "__main__":
     # Consent data plots
     consent_data = os.path.join(args.input_dir, 'statistics_consent.txt')
     data = load_data(consent_data)
-    np_data = np.asarray(data)
+    np_data = np.asarray(data) 
+
+    sns.set(font_scale=1.3, style='ticks')
 
     data = []
     # calculate mean location for each scene
@@ -158,7 +160,7 @@ if __name__ == "__main__":
     ax = sns.boxplot(data=df_long, x='user', y='value', hue='scene', fliersize=1, palette="Blues", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
-    plt.suptitle("Annotation Agreement per User")
+    # plt.suptitle("Annotation Agreement per User")
     ax.get_legend().set_title('')
     ax.set(ylabel="error")
     save_file = os.path.join(args.output_dir, '01_3DSADT-user-consent.png')
@@ -176,10 +178,11 @@ if __name__ == "__main__":
                       'translation [mm]', 'rotation [degrees]'], var_name=['user'])
     ax = sns.boxplot(data=df_long, y='scene', x='value', hue='user', fliersize=1, palette="Blues", width=0.7,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
-    plt.suptitle("Annotation Agreement per Scene")
+    # plt.suptitle("Annotation Agreement per Scene")
     ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
     ax.set(xlabel="error")
+    ax.set(xlim=(-0.1,6))
     save_file = os.path.join(args.output_dir, '02_3DSADT-scene-consent.png')
     plt.tight_layout()
     plt.savefig(save_file, bbox_inches='tight', dpi=300)
@@ -200,11 +203,12 @@ if __name__ == "__main__":
                       'translation [mm]', 'rotation [degrees]'], var_name=['user'])
     ax = sns.boxplot(data=df_long, x='scene', y='value', hue='user', fliersize=0, palette="Blues", width=0.3, 
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto)
-    plt.suptitle("Annotation Agreement Synthetic vs. Real Scenes")
+    # plt.suptitle("Annotation Agreement Synthetic vs. Real Scenes")
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
     ax.set(ylabel="error")
     ax.set_aspect(0.5)
+    ax.set(ylim=(0,5))
     save_file = os.path.join(args.output_dir, '03_3DSADT-scene-synt_real_consent.png')
     plt.tight_layout()
     plt.savefig(save_file, bbox_inches='tight', dpi=300)
@@ -240,7 +244,7 @@ if __name__ == "__main__":
                       'translation [mm]', 'rotation [degrees]'], var_name=['scene'])
     ax = sns.boxplot(data=df_long, x='user', y='value', hue='scene', fliersize=1, palette="Greens", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
-    plt.suptitle("Annotation Error to Synthetic Groundtruth per User", )
+    # plt.suptitle("Annotation Error to Synthetic Groundtruth per User", )
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
     ax.set(ylabel="error")
@@ -254,7 +258,7 @@ if __name__ == "__main__":
     df_long = pd.melt(df, id_vars=['user'], value_vars=[
                       'translation [mm]'], var_name=['scene'])
     ax = sns.lineplot(data=df_long, x='user', y='value', hue='scene', palette=[lightgreen], marker="o", linestyle='', err_style='bars', ci=100)
-    plt.suptitle("Translation Error to Synthetic Groundtruth per User", )
+    # plt.suptitle("Translation Error to Synthetic Groundtruth per User", )
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
     ax.set(ylabel="error")
@@ -273,7 +277,7 @@ if __name__ == "__main__":
     df_long = pd.melt(df, id_vars=['user'], value_vars=[
                       'rotation [degrees]'], var_name=['scene'])
     ax = sns.lineplot(data=df_long, x='user', y='value', hue='scene', palette=[darkgreen], marker="o", linestyle='', err_style='bars', ci=100)
-    plt.suptitle("Rotation Error to Synthetic Groundtruth per User", )
+    # plt.suptitle("Rotation Error to Synthetic Groundtruth per User", )
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
     ax.set(ylabel="error")
@@ -293,7 +297,7 @@ if __name__ == "__main__":
     df_long = df_long.astype({'value':float})
     ax = sns.boxplot(data=df_long, x='scene', y='value', hue='user', fliersize=1, palette="Greens", width=0.5,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
-    plt.suptitle("Annotation Error to Synthetic Groundtruth per Scene")
+    # plt.suptitle("Annotation Error to Synthetic Groundtruth per Scene")
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
     ax.set(ylabel="error")
