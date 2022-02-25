@@ -138,6 +138,7 @@ if __name__ == "__main__":
             else:
                 blended = anno_img
 
+            print(f"Scene: {pose_idx}")
             cv2.imshow('Object Mask Visualization', blended)
             while cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE):
                 key = cv2.waitKey(1)
