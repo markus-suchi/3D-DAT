@@ -14,6 +14,7 @@ import v4r_dataset_toolkit as v4r
 # antialiasing in mask generation
 from v4r_dataset_toolkit import pyrender_wrapper
 import pyrender
+from PIL import Image
 
 groundtruth_to_pyrender = np.array([[1, 0, 0, 0],
                                     [0, -1, 0, 0],
@@ -65,6 +66,41 @@ def project_mesh_to_2d(models, cam_poses, model_colors, intrinsic):
     return renders
 
 
+def get_masks_from_render(colors, image):
+    masks = []
+    img = image
+    for idx, color in enumerate(colors):
+        np_color = np.array(color)
+        if np.shape(image)[2] == 4:
+            img = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+        else:
+            img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        mask =(img == np_color).all(-1) 
+        masks.append(mask)
+    return masks
+
+def get_bbox_from_masks(masks):
+    bboxes = []
+    for mask in masks:
+        if np.any(mask):
+            rows = np.any(mask, axis=1)
+            cols = np.any(mask, axis=0)
+            rmin, rmax = np.where(rows)[0][[0, -1]]
+            cmin, cmax = np.where(cols)[0][[0, -1]]
+            bboxes.append((cmin, rmin, cmax, rmax))
+        else:
+            bboxes.append(None)
+    return bboxes
+
+
+def put_text(text, img, x, y, color):
+    (w, h), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 1)
+
+    img = cv2.rectangle(img, (x, y - 30), (x + w, y), color, -1)
+    img = cv2.putText(img, text, (x, y - 8),
+			cv2.FONT_HERSHEY_SIMPLEX, 1, [255,255,255], 1)
+
+
 def load_object_models(scene_file_reader):
     oriented_models = []
     # Load poses
@@ -90,6 +126,8 @@ if __name__ == "__main__":
                         help="Overlay alpha for scene background.")
     parser.add_argument("-o", "--output", type=str, default='',
                         help="Output directory for masked images.")
+    parser.add_argument("-r", "--rotate", action='store_true', default='',
+                        help="Rotate image.")
     args = parser.parse_args()
 
     if args.output:
@@ -133,8 +171,26 @@ if __name__ == "__main__":
                 masked_image = cv2.cvtColor(np.asarray(
                     orig_imgs[pose_idx]), convert_flag)
                 alpha = args.alpha
+
+ 
                 blended = cv2.addWeighted(
                     anno_img, 1-alpha, masked_image, alpha, 0)
+ 
+                if args.rotate:
+                    blended = cv2.rotate(blended, cv2.ROTATE_180)
+                    anno_img = cv2.rotate(anno_img, cv2.ROTATE_180)
+
+                masks = get_masks_from_render(model_colors, anno_img)
+                bboxes = get_bbox_from_masks(masks)
+                for idx, bbox in enumerate(bboxes):
+                    if bbox:
+                        x,y,x1,y1 = bbox
+                        color = [model_colors[idx][2], model_colors[idx][1], model_colors[idx][0]]
+                        cv2.rectangle(blended, (x,y),(x1,y1), color, 2)
+                        obj_name = objects[idx][0].name
+                        put_text(obj_name, blended, x, y1, color)
+                    else:
+                        print("No bbox available. Object not visible.")
             else:
                 blended = anno_img
 
