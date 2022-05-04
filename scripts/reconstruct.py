@@ -6,7 +6,7 @@ CONFIG = {
     "debug_mode": True,
     "max_depth": 0.95,
     "voxel_size": 0.02,
-    "tsdf_cubic_size": 1.0,
+    "tsdf_cubic_size": 1.,
     "icp_method": "color",
     "icp_refinement": False,
     "save_refined": True,
