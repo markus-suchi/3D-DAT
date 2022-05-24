@@ -15,7 +15,7 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
     """Cycle through available cameras"""
     bl_idname = "view3d.cycle_cameras"
     bl_label = "Cycle Cameras"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER','UNDO'}
 
     direction: bpy.props.EnumProperty(
         name="Direction",
@@ -75,11 +75,22 @@ def register():
             VIEW3D_OT_cycle_cameras.bl_idname, 'RIGHT_ARROW', 'PRESS', ctrl=True, shift=True)
         kmi.properties.direction = 'FORWARD'
         addon_keymaps.append((km, kmi))
+
         kmi = km.keymap_items.new(
             VIEW3D_OT_cycle_cameras.bl_idname, 'LEFT_ARROW', 'PRESS', ctrl=True, shift=True)
         kmi.properties.direction = 'BACKWARD'
         addon_keymaps.append((km, kmi))
 
+        kmi = km.keymap_items.new(
+            VIEW3D_OT_cycle_cameras.bl_idname, 'WHEELDOWNMOUSE', 'PRESS', ctrl=False, shift=True)
+        kmi.properties.direction = 'BACKWARD'
+        addon_keymaps.append((km, kmi))
+ 
+        kmi = km.keymap_items.new(
+            VIEW3D_OT_cycle_cameras.bl_idname, 'WHEELUPMOUSE', 'PRESS', ctrl=False, shift=True)
+        kmi.properties.direction = 'FORWARD'
+        addon_keymaps.append((km, kmi))
+ 
 
 def unregister():
     for km, kmi in addon_keymaps:
