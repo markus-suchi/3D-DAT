@@ -75,9 +75,10 @@ def get_masks_from_render(colors, image):
             img = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
         else:
             img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        mask =(img == np_color).all(-1) 
+        mask = (img == np_color).all(-1)
         masks.append(mask)
     return masks
+
 
 def get_bbox_from_masks(masks):
     bboxes = []
@@ -98,7 +99,7 @@ def put_text(text, img, x, y, color):
 
     img = cv2.rectangle(img, (x, y - 30), (x + w, y), color, -1)
     img = cv2.putText(img, text, (x, y - 8),
-			cv2.FONT_HERSHEY_SIMPLEX, 1, [255,255,255], 1)
+                      cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 255, 255], 1)
 
 
 def load_object_models(scene_file_reader):
@@ -126,6 +127,8 @@ if __name__ == "__main__":
                         help="Overlay alpha for scene background.")
     parser.add_argument("-o", "--output", type=str, default='',
                         help="Output directory for masked images.")
+    parser.add_argument("-v", "--visualize", action='store_true',
+                        help="Visualize scene and optionally save to file.")
     parser.add_argument("-r", "--rotate", action='store_true', default='',
                         help="Rotate image.")
     args = parser.parse_args()
@@ -135,25 +138,35 @@ if __name__ == "__main__":
             print(f"Output path {args.output} does not exist.")
             sys.exit()
 
+    if not args.output and not args.visualize:
+        print("You have to specify option --output or --visualize or both.\n")
+        parser.print_help()
+        sys.exit(1)
+
     scene_file_reader = v4r.io.SceneFileReader.create(args.config)
     camera_poses = scene_file_reader.get_camera_poses(args.scene_id)
     intrinsic = scene_file_reader.get_camera_info_scene(args.scene_id)
     objects = scene_file_reader.get_object_poses(args.scene_id)
-    object_library = scene_file_reader.get_object_library()
-
     oriented_models = load_object_models(scene_file_reader)
 
     model_colors = []
-    for object in objects:
-        scene_object = scene_file_reader.object_library[object[0].id]
-        model_colors.append(scene_object.color)
+    if args.visualize:
+        for object in objects:
+            # random color
+            color = np.random.randint(256, size=3)
+            color = [int(color[0]), int(color[1]), int(color[2])]
+            model_colors.append(color)
+    else:
+        for i, object in enumerate(objects):
+            i += 1
+            model_colors.append([i, 0, 0])
 
     orig_imgs = scene_file_reader.get_images_rgb(args.scene_id)
     camera_poses = [pose.tf for pose in camera_poses]
     annotation_imgs = project_mesh_to_2d(
         oriented_models, camera_poses, model_colors, intrinsic)
 
-    if not args.output:
+    if args.visualize:
         cv2.namedWindow('Object Mask Visualization',
                         flags=cv2.WINDOW_AUTOSIZE | cv2.WINDOW_GUI_EXPANDED)
         stop = False
@@ -172,10 +185,9 @@ if __name__ == "__main__":
                     orig_imgs[pose_idx]), convert_flag)
                 alpha = args.alpha
 
- 
                 blended = cv2.addWeighted(
                     anno_img, 1-alpha, masked_image, alpha, 0)
- 
+
                 if args.rotate:
                     blended = cv2.rotate(blended, cv2.ROTATE_180)
                     anno_img = cv2.rotate(anno_img, cv2.ROTATE_180)
@@ -184,11 +196,12 @@ if __name__ == "__main__":
                 bboxes = get_bbox_from_masks(masks)
                 for idx, bbox in enumerate(bboxes):
                     if bbox:
-                        x,y,x1,y1 = bbox
-                        color = [model_colors[idx][2], model_colors[idx][1], model_colors[idx][0]]
-                        cv2.rectangle(blended, (x,y),(x1,y1), color, 2)
+                        x, y, x1, y1 = bbox
+                        color = [model_colors[idx][2],
+                                 model_colors[idx][1], model_colors[idx][0]]
+                        cv2.rectangle(blended, (x, y), (x1, y1), color, 2)
                         obj_name = objects[idx][0].name
-                        put_text(obj_name, blended, x, y1, color)
+                        put_text(obj_name, blended, x-1, y1+30, color)
                     else:
                         print("No bbox available. Object not visible.")
             else:
@@ -196,6 +209,12 @@ if __name__ == "__main__":
 
             print(f"Scene: {pose_idx}")
             cv2.imshow('Object Mask Visualization', blended)
+
+            outimg = cv2.cvtColor(blended, cv2.COLOR_BGRA2BGR)
+            if args.output:
+                output = os.path.join(args.output, f"mask_{pose_idx:03d}.png")
+                cv2.imwrite(output, outimg)
+
             while cv2.getWindowProperty('Object Mask Visualization', cv2.WND_PROP_VISIBLE):
                 key = cv2.waitKey(1)
                 if key == ord('q'):
@@ -209,11 +228,14 @@ if __name__ == "__main__":
         pbar = tqdm(enumerate(annotation_imgs), desc=f"Saving")
         for pose_idx, anno_img in pbar:
             if np.shape(anno_img)[2] == 3:
-                anno_img = cv2.cvtColor(anno_img, cv2.COLOR_RGB2GRAY)
-            else:
-                anno_img = cv2.cvtColor(anno_img, cv2.COLOR_RGBA2GRAY)
-            ret, anno_img = cv2.threshold(anno_img, 0, 255, cv2.THRESH_BINARY)
-            output_path = os.path.join(
-                args.output, os.path.basename(filepaths[pose_idx]))
-            pbar.set_description(f"Saving: {output_path}")
-            cv2.imwrite(output_path, anno_img)
+                anno_img = cv2.cvtColor(anno_img, cv2.COLOR_RGB2BGRA)
+            masks = get_masks_from_render(model_colors, anno_img)
+
+            for i, mask in enumerate(masks):
+                filename = f"{objects[i][0].name}_" + \
+                    f"{i:03d}_" + os.path.basename(filepaths[pose_idx])
+                output_path = os.path.join(
+                    args.output, filename)
+                mask_image = np.array(mask) * 255
+                cv2.imwrite(output_path, mask_image)
+                pbar.set_description(f"Saving: {output_path}")
