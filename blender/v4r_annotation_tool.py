@@ -147,7 +147,7 @@ class V4R_OT_save_pose(bpy.types.Operator):
                 pose = pose.reshape(-1)
                 # get id from object mesh property
                 output_list.append(
-                    {"id": int(obj["v4r_id"]), "pose": pose.tolist()})
+                    {"id": obj["v4r_id"], "pose": pose.tolist()})
 
             if output_list:
                 with open(full_path, 'w') as f:

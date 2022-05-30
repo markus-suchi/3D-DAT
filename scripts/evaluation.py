@@ -13,6 +13,7 @@ import math
 import glob
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib
 import pandas as pd
 import seaborn as sns
 
@@ -108,8 +109,8 @@ if __name__ == "__main__":
 
     auto = True
 
-    groundtruth_scenes = ['01_tutorial', '02_mustard',
-                          '03_mug', '04_spam_can', '05_scissors']
+    groundtruth_scenes = ['1', '2',
+                          '3', '4']
  
     # Consent data plots
     consent_data = os.path.join(args.input_dir, 'statistics_consent.txt')
@@ -176,13 +177,13 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     df_long = pd.melt(df, id_vars=['scene'], value_vars=[
                       'translation [mm]', 'rotation [degrees]'], var_name=['user'])
-    ax = sns.boxplot(data=df_long, y='scene', x='value', hue='user', fliersize=1, palette="Blues", width=0.7,
+    ax = sns.boxplot(data=df_long, x='scene', y='value', hue='user', fliersize=1, palette="Blues", width=0.7,
                      medianprops=dict(color="red", alpha=0.7), linewidth=0.7, autorange=auto, whis=100.)
+
     # plt.suptitle("Annotation Agreement per Scene")
-    ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.get_legend().set_title('')
-    ax.set(xlabel="error")
-    ax.set(xlim=(-0.1,6))
+    ax.set(ylabel="error")
     save_file = os.path.join(args.output_dir, '02_3DSADT-scene-consent.png')
     plt.tight_layout()
     plt.savefig(save_file, bbox_inches='tight', dpi=300)

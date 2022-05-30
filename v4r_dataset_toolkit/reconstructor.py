@@ -30,6 +30,7 @@ class Reconstructor:
         self.poses = poses
         self.intrinsic = intrinsic
         self.path_dataset = path_dataset
+        self.path_groundtruth = path_groundtruth
 
     def get_reconstruction(self):
             n_files = len(self.color_files)
@@ -53,11 +54,11 @@ class Reconstructor:
             poses = [np.linalg.inv(pose.tf) for pose in self.poses] 
 
             #TODO: use refined if available
-            if self.config["icp_refinement"] and path_groundtruth[-11:-4] != "refined":
-                icp_refinement(rgbds, poses, intrinsic, config=self.config)
+            if self.config["icp_refinement"] and self.path_groundtruth[-11:-4] != "refined":
+                icp_refinement(rgbds, poses, self.intrinsic, config=self.config)
 
-                if config["save_refined"]:
-                    save_poses(poses, path_groundtruth[:-4] + "_refined.txt")
+                if self.config["save_refined"]:
+                    save_poses(poses, self.path_groundtruth[:-4] + "_refined.txt")
 
             for frame_id in tqdm(range(n_files), desc="Integration"):
                 volume.integrate(rgbds[frame_id], self.intrinsic, poses[frame_id])
