@@ -41,24 +41,6 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
                                         update=update_color_type, options=set())
 
 
-class V4R_OT_confirm_load(bpy.types.Operator):
-    """Tooltip"""
-    bl_idname = "v4r.confirm_load"
-    bl_label = "Load Scene"
-
-    def execute(self, context):
-        print("Loading new scene witout saving.")
-        return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-    
-    def draw(self, context):
-        row = self.layout.column(align=True)
-        row.label(text="There are unsaved changes!", icon='ERROR')
-        row.label(text="Press 'OK' to proceed loading and loose changes.")
-        row.label(text="Press 'Esc' to cancel.")
-
 # TODO: Need to define and visualize the current loaded scene
 # Switch only after successful loading
 
@@ -256,7 +238,6 @@ def register():
     bpy.utils.register_class(V4R_PG_infos)
     bpy.utils.register_class(V4R_PT_annotation)
     bpy.utils.register_class(V4R_OT_load_dataset)
-    bpy.utils.register_class(V4R_OT_confirm_load)
     bpy.utils.register_class(V4R_OT_import_scene)
     bpy.utils.register_class(V4R_OT_save_pose)
 
@@ -268,7 +249,6 @@ def unregister():
     bpy.utils.unregister_class(V4R_PG_infos)
     bpy.utils.unregister_class(V4R_PT_annotation)
     bpy.utils.unregister_class(V4R_OT_load_dataset)
-    bpy.utils.unregister_class(V4R_OT_confirm_load)
     bpy.utils.unregister_class(V4R_OT_import_scene)
     bpy.utils.unregister_class(V4R_OT_save_pose)
 
