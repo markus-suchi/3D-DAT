@@ -62,10 +62,6 @@ class V4R_OT_import_scene(bpy.types.Operator):
             print(text)
             return {'CANCELLED'}
 
-        # Check if objects poses have changed
-        # If no initiate loading without confirm dialog 
-        # Else initiate confirmation dialog
- 
         id = context.scene.v4r_infos.scene_id
         if(id):
             bpy.context.window.cursor_set("WAIT")
@@ -89,6 +85,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
             return {'CANCELLED'}
 
     def invoke(self, context, event):
+        # check if poses of objects has changed since import
         doit= False
         if doit:
             return context.window_manager.invoke_props_dialog(self)
