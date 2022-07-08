@@ -48,6 +48,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
     bl_idname = "v4r.import_scene"
     bl_label = "Import Scene"
     bl_options = {'REGISTER', 'UNDO'}
+    draw: bpy.props.BoolProperty(name="draw", default=False)
 
     @classmethod
     def poll(self, context):
@@ -86,17 +87,18 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
     def invoke(self, context, event):
         # check if poses of objects has changed since import
-        doit= False
+        doit= self.draw
         if doit:
             return context.window_manager.invoke_props_dialog(self)
         else:
             return self.execute(context)
     
     def draw(self, context):
-        row = self.layout.column(align=True)
-        row.label(text="There are unsaved changes!", icon='ERROR')
-        row.label(text="Press 'OK' to proceed loading and loose changes.")
-        row.label(text="Press 'Esc' to cancel.")
+        if self.draw:
+            row = self.layout.column(align=True)
+            row.label(text="There are unsaved changes!", icon='ERROR')
+            row.label(text="Press 'OK' to proceed loading and loose changes.")
+            row.label(text="Press 'Esc' to cancel.")
 
 
 class V4R_OT_load_dataset(bpy.types.Operator):
