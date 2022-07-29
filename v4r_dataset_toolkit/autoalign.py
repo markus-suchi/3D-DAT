@@ -1,0 +1,121 @@
+import numpy as np
+import open3d as o3d
+from tqdm import tqdm
+
+
+flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+
+def draw_registration_result_original_color(source, target, transformation):
+    source_temp = copy.deepcopy(source)
+    target_temp = copy.deepcopy(target)
+    source_temp.transform(transformation)
+    source_temp.transform(flip_transform)
+    target_temp.transform(flip_transform)
+    o3d.visualization.draw_geometries([source_temp, target_temp])
+
+
+def multiscale_icp(source,
+                   target,
+                   voxel_size,
+                   max_iter,
+                   config,
+                   init_transformation=np.identity(4)):
+    current_transformation = init_transformation
+    for i, scale in enumerate(range(len(max_iter))):  # multi-scale approach
+        iter = max_iter[scale]
+        distance_threshold = config["voxel_size"] * 1.4
+        # print("voxel_size %f" % voxel_size[scale])
+        source_down = source.voxel_down_sample(voxel_size[scale])
+        target_down = target.voxel_down_sample(voxel_size[scale])
+
+        if config["icp_method"] == "point_to_point":
+            result_icp = o3d.pipelines.registration.registration_icp(
+                source_down, target_down, distance_threshold,
+                current_transformation,
+                o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter))
+        else:
+            source_down.estimate_normals(
+                o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size[scale] *
+                                                     2.0,
+                                                     max_nn=30))
+            target_down.estimate_normals(
+                o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size[scale] *
+                                                     2.0,
+                                                     max_nn=30))
+            if config["icp_method"] == "point_to_plane":
+                result_icp = o3d.pipelines.registration.registration_icp(
+                    source_down, target_down, distance_threshold,
+                    current_transformation,
+                    o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+                    o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter))
+            elif config["icp_method"] == "color":
+                conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
+                        relative_fitness=1e-6,
+                        relative_rmse=1e-6,
+                        max_iteration=iter)
+                result_icp = o3d.pipelines.registration.registration_colored_icp(
+                    source=source_down, 
+                    target=target_down, 
+                    max_correspondence_distance=voxel_size[scale],
+                    init=current_transformation, 
+                    criteria=conv_criteria
+                    )
+            else:
+                raise TypeError("Method %s not supported." % config["icp_method"])
+
+        current_transformation = result_icp.transformation
+        if i == len(max_iter) - 1:
+            information_matrix = o3d.pipelines.registration.get_information_matrix_from_point_clouds(
+                source_down, target_down, voxel_size[scale] * 1.4,
+                result_icp.transformation)
+
+    return (result_icp.transformation, information_matrix)
+
+
+def icp_refinement(rgbds, poses, intrinsic, config):
+    voxel_size = config["voxel_size"]
+
+    for frame_id in tqdm(range(1, len(rgbds), 1), desc="Refinement"):
+        source = o3d.geometry.PointCloud.create_from_rgbd_image(
+            rgbds[frame_id-1],
+            intrinsic,
+            poses[frame_id-1])
+
+        target = o3d.geometry.PointCloud.create_from_rgbd_image(
+            rgbds[frame_id],
+            intrinsic,
+            poses[frame_id])
+
+        transfo, information_mat = multiscale_icp(
+            source,
+            target,
+            [2*voxel_size, voxel_size, voxel_size/2.0, voxel_size/4.0],
+            [100, 50, 30, 14],
+            config,
+            init_transformation=np.identity(4))
+
+        poses[frame_id] = np.dot(poses[frame_id], transfo)
+
+def sample_pointcloud(mesh, uniform_points=2500, poisson_points=400):
+    pcd = mesh.sample_points_uniformly(number_of_points=2500)
+    pcd = mesh.sample_points_poisson_disk(number_of_points=500, pcl=pcd)
+    return pcd
+
+def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
+    print("starting autoalign")
+    source_ pcd = sample_pointcloud(object_mesh)
+    target_pcd = sample_pointcloud(scene_mesh)
+    # apply icp
+    config = {'icp_method':'point_to_point',
+              'voxel_size':0.02}
+
+    transform, information_mat = multiscale_icp(
+        source_pcd,
+        target_pcd,
+        [2*voxel_size, voxel_size, voxel_size/2.0, voxel_size/4.0],
+        [100, 50, 30, 14],
+        config,
+        init_transformation=init_pose)
+    print("finished autoalign")
+    return transform

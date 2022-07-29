@@ -41,10 +41,14 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
                                         update=update_color_type, options=set())
 
 
+# TODO: Need to define and visualize the current loaded scene
+# Switch only after successful loading
+
 class V4R_OT_import_scene(bpy.types.Operator):
     bl_idname = "v4r.import_scene"
     bl_label = "Import Scene"
     bl_options = {'REGISTER', 'UNDO'}
+    draw: bpy.props.BoolProperty(name="draw", default=False)
 
     @classmethod
     def poll(self, context):
@@ -80,6 +84,21 @@ class V4R_OT_import_scene(bpy.types.Operator):
         else:
             print("No scene selected. Import canceled.")
             return {'CANCELLED'}
+
+    def invoke(self, context, event):
+        # check if poses of objects has changed since import
+        doit= self.draw
+        if doit:
+            return context.window_manager.invoke_props_dialog(self)
+        else:
+            return self.execute(context)
+    
+    def draw(self, context):
+        if self.draw:
+            row = self.layout.column(align=True)
+            row.label(text="There are unsaved changes!", icon='ERROR')
+            row.label(text="Press 'OK' to proceed loading and loose changes.")
+            row.label(text="Press 'Esc' to cancel.")
 
 
 class V4R_OT_load_dataset(bpy.types.Operator):

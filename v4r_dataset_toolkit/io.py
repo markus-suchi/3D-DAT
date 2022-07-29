@@ -239,10 +239,10 @@ class SceneFileReader:
             f'annotation_dir: {self.annotation_dir}\n'\
             f'mask_dir: {self.mask_dir}'
 
-    def get_camera_info(self):
-        full_path = os.path.join(
-            self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
-        return CameraInfo.create(full_path)
+    # def get_camera_info(self):
+        # full_path = os.path.join(
+            # self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
+        # return CameraInfo.create(full_path)
 
     def get_camera_info_scene(self, id):
         full_path = os.path.join(
@@ -307,7 +307,7 @@ class SceneFileReader:
         # with the help of open3d (maybe just the mesh?)
         rgb_images = self.get_images_rgb(id)
         depth_images = self.get_images_depth(id)
-        camera_info = self.get_camera_info().as_o3d()
+        camera_info = self.get_camera_info_scene(id).as_o3d()
         camera_poses = self.get_camera_poses(id)
         pointclouds = []
         for i, camera_pose in enumerate(camera_poses):
