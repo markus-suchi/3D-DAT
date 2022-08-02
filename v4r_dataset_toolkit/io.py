@@ -330,7 +330,7 @@ class SceneFileReader:
                 pose = items.get("pose")
                 if not pose:
                     pose = np.eye(4).tolist()
-                objects.append((self.object_library[id], pose))
+                objects.append([self.object_library[id], pose])
         return objects
 
     def get_scene(self, id):
