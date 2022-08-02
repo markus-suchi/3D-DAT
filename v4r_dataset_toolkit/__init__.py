@@ -3,3 +3,4 @@ from . import objects
 from . import meshreader
 from . import reconstructor
 from . import icp
+from . import autoalign
