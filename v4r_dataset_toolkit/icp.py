@@ -1,7 +1,7 @@
 import numpy as np
 import open3d as o3d
 from tqdm import tqdm
-
+import copy
 
 flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
 
@@ -33,7 +33,24 @@ def multiscale_icp(source,
                 source_down, target_down, distance_threshold,
                 current_transformation,
                 o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter))
+                o3d.pipelines.registration.ICPConvergenceCriteria(
+                    max_iteration=iter,
+                    relative_fitness=1e-6,
+                    relative_rmse=1e-6,
+                        ))
+        elif config["icp_method"] == "robust_icp":
+            print("Robust ICP")
+            conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
+                        relative_fitness=1e-6,
+                        relative_rmse=1e-6,
+                        max_iteration=iter)
+             
+            result_icp = o3d.pipelines.registration.registration_generalized_icp(
+                source_down, target_down, distance_threshold,
+                init = current_transformation,
+                estimation_method = o3d.pipelines.registration.TransformationEstimationForGeneralizedICP(),
+                criteria = conv_criteria)
+            print(result_icp)
         else:
             source_down.estimate_normals(
                 o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size[scale] *
@@ -70,6 +87,7 @@ def multiscale_icp(source,
                 source_down, target_down, voxel_size[scale] * 1.4,
                 result_icp.transformation)
 
+    print(result_icp)
     return (result_icp.transformation, information_matrix)
 
 
