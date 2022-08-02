@@ -33,10 +33,12 @@ def plane_reconstruct(incloud, min_number_points=40000):
 
 
 def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
-    source_pcd = sample_pointcloud(object_mesh, 10000, 10000)
-    target_pcd = sample_pointcloud(scene_mesh, 1000000, 1000000)
+    # Aligning scene to object performs better than object to scene
 
-    transform = init_pose
+    target_pcd = sample_pointcloud(object_mesh, 10000, 10000)
+    source_pcd = sample_pointcloud(scene_mesh, 100000, 100000)
+
+    transform = np.linalg.inv(init_pose)
 
     point_to_plane = True
     point_to_point = True
@@ -69,5 +71,5 @@ def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
             config,
             init_transformation=transform)
 
-    draw_registration_result_original_color(object_mesh, target_pcd, transform)
+    transform = np.linalg.inv(transform)
     return transform, information_mat
