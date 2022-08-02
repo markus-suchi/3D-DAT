@@ -6,7 +6,7 @@ import os
 from scipy.spatial.transform import Rotation as R
 from tqdm import tqdm
 
-from .icp import icp_refinement
+from v4r_dataset_toolkit.icp import icp_refinement
 
 def save_poses(poses, path_groundtruth):
     with open(path_groundtruth, "w") as fp:
