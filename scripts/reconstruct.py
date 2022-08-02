@@ -4,9 +4,9 @@ import v4r_dataset_toolkit as v4r
 
 CONFIG = {
     "debug_mode": True,
-    "max_depth": 0.95,
+    "max_depth": 1.3,
     "voxel_size": 0.02,
-    "tsdf_cubic_size": 1.,
+    "tsdf_cubic_size": 1.5,
     "icp_method": "color",
     "icp_refinement": False,
     "save_refined": True,
