@@ -18,7 +18,7 @@ class MeshReader:
         return 'mesh_file: {self.file}'
 
     def as_o3d(self):
-        return o3d.io.read_triangle_mesh(self.file)
+        return o3d.io.read_triangle_mesh(self.file).scale(self.scale, [0 ,0, 0])
 
     def as_trimesh(self):
         scale_matrix = trimesh.transformations.scale_matrix(self.scale, [
