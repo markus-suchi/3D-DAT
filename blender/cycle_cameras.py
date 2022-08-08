@@ -15,7 +15,7 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
     """Cycle through available cameras"""
     bl_idname = "view3d.cycle_cameras"
     bl_label = "Cycle Cameras"
-    bl_options = {'REGISTER','UNDO'}
+    bl_options = {'REGISTER'}
 
     direction: bpy.props.EnumProperty(
         name="Direction",
@@ -52,7 +52,11 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
             except ValueError:
                 new_idx = 0
 
-            bpy.context.area.spaces.active.camera = cam_objects[new_idx]
+            current_camera = bpy.context.area.spaces.active.camera
+            next_camera = cam_objects[new_idx]
+            current_camera.hide_viewport = next_camera.hide_viewport
+            bpy.context.area.spaces.active.camera = next_camera
+            current_camera.hide_viewport = False
             bpy.context.area.spaces.active.use_local_camera = True
             return {'FINISHED'}
         else:

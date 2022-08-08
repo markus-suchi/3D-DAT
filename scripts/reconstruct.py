@@ -5,12 +5,12 @@ import v4r_dataset_toolkit as v4r
 CONFIG = {
     "debug_mode": True,
     "max_depth": 1.3,
-    "voxel_size": 0.02,
+    "voxel_size": 0.004,
     "tsdf_cubic_size": 1.5,
     "icp_method": "color",
     "icp_refinement": False,
     "save_refined": True,
-    "sdf_trunc": 0.008,
+    "sdf_trunc": 0.018,
     "triangles": 500000,
     "no_simplify": False,
     "cluster" : False
@@ -61,8 +61,7 @@ if __name__ == "__main__":
         scene_file_reader.camera_pose_file)
 
     path_dataset = os.path.join(
-        scene_file_reader.root_dir,
-        scene_file_reader.scenes_dir,
+        scene_file_reader.annotation_dir,
         args.scene_id)
 
     color_files = scene_file_reader.get_images_rgb(args.scene_id)

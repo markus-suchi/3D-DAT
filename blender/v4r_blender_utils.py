@@ -5,6 +5,10 @@ import bpy
 import glob
 import os
 
+from v4r_dataset_toolkit import autoalign
+# TODO: get lokal used parameters like SCENE_FILE_READER and SCENE_MESH 
+#       over here
+
 
 # https://blender.stackexchange.com/questions/45138/buttons-for-custom-properties-dont-refresh-when-changed-by-other-parts-of-the-s
 # Auto refresh for custom collection property does not work without tagging a redraw
@@ -16,7 +20,6 @@ def tag_redraw(context, space_type="PROPERTIES", region_type="WINDOW"):
                 for region in area.regions:
                     if region.type == region_type:
                         region.tag_redraw()
-
 
 def tag_redraw_all():
     for area in bpy.context.screen.areas:
@@ -159,3 +162,27 @@ def get_cam_views():
                 if current_perspective == 'CAMERA':
                     cam_views.append(space.region_3d)
     return cam_views
+
+def load_reconstruction(SCENE_FILE_READER, id):
+    # load the pointcloud reconstruction and return it
+    return SCENE_FILE_READER.get_reconstruction_align(id)
+    # add reconstruction visuals as blender obj
+    # if reconstruction is there remove and reload new one
+
+
+def has_active_object_id():
+    if bpy.context.active_object:
+        if "v4r_id" in bpy.context.active_object:
+            return True
+    return False
+
+
+def align_current_object(SCENE_FILE_READER, SCENE_MESH):
+    if has_active_object_id(): 
+        active = bpy.context.active_object
+        current_id = active["v4r_id"]
+        print(f"Align object {current_id}")
+        current_pose = active.matrix_world
+        current_mesh = SCENE_FILE_READER.object_library[current_id].mesh.as_o3d()
+        pose, info = autoalign.auto_align(current_mesh, SCENE_MESH,init_pose=current_pose)
+        active.matrix_world = mathutils.Matrix(pose)

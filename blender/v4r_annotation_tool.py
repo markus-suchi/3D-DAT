@@ -10,6 +10,7 @@ from .. import v4r_dataset_toolkit as v4r
 from . import v4r_blender_utils
 
 SCENE_FILE_READER = None
+SCENE_MESH = None
 
 
 def update_alpha(self, context):
@@ -19,6 +20,19 @@ def update_alpha(self, context):
 
 def update_color_type(self, context):
     bpy.context.space_data.shading.color_type = self.color_type
+
+
+def update_show_cameras(self, context):
+    cameras = [ob for ob in bpy.data.collections['cameras'].objects if ob.type == 'CAMERA']
+
+    if not context.scene.v4r_infos.show_cameras:
+        for items in cameras:
+            items.hide_viewport = True
+        # only current camera is viewable
+        context.area.spaces.active.camera.hide_viewport = False
+    else:
+        for items in cameras:
+            items.hide_viewport = False
 
 
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
@@ -39,6 +53,8 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
                                         items=[('OBJECT', 'COLOR', 'Object Color'),
                                                ('VERTEX', 'VERTEX', 'Vertex Color')],
                                         update=update_color_type, options=set())
+    show_cameras: bpy.props.BoolProperty(name="Show cameras", default=True,
+                                         update=update_show_cameras)
 
 
 # TODO: Need to define and visualize the current loaded scene
@@ -56,6 +72,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
     def execute(self, context):
         global SCENE_FILE_READER
+        global SCENE_MESH
 
         if not SCENE_FILE_READER:
             text = "You need to load a dataset file first."
@@ -80,6 +97,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
             update_alpha(self, context)
             # set to vertex color
             context.scene.v4r_infos.color_type = "VERTEX"
+            SCENE_MESH = v4r_blender_utils.load_reconstruction(SCENE_FILE_READER, id)
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -141,10 +159,10 @@ class V4R_OT_load_dataset(bpy.types.Operator):
 class V4R_OT_save_pose(bpy.types.Operator):
     bl_idname = "v4r.save_pose"
     bl_label = "Save Objects"
-    # filepath: bpy.props.StringProperty(
-    # subtype="FILE_PATH", default="./poses.yaml")
 
     def execute(self, context):
+        global SCENE_FILE_READER
+
         id = bpy.context.scene.v4r_infos.scene_id
 
         objects_available = bpy.data.collections.get("objects")
@@ -164,7 +182,6 @@ class V4R_OT_save_pose(bpy.types.Operator):
                 pose = np.zeros((4, 4))
                 pose[:, :] = obj.matrix_world
                 pose = pose.reshape(-1)
-                # get id from object mesh property
                 output_list.append(
                     {"id": obj["v4r_id"], "pose": pose.tolist()})
 
@@ -176,6 +193,25 @@ class V4R_OT_save_pose(bpy.types.Operator):
         else:
             print("You need to open the dataset file first and import a scene.")
             return {'CANCELLED'}
+
+class V4R_OT_align_object(bpy.types.Operator):
+    """ Align selected object to scene. """
+
+    bl_idname = "v4r.align_object"
+    bl_label = "Align"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return (v4r_blender_utils.has_active_object_id() and context.area.type == 'VIEW_3D')
+
+    def execute(self, context):
+        global SCENE_FILE_READER
+        global SCENE_MESH
+        bpy.context.window.cursor_set("WAIT")
+        v4r_blender_utils.align_current_object(SCENE_FILE_READER, SCENE_MESH) 
+        bpy.context.window.cursor_set("DEFAULT")
+        return {'FINISHED'}
 
 
 class V4R_PT_annotation(bpy.types.Panel):
@@ -211,11 +247,17 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         col.separator()
 
+        col.operator("v4r.align_object")
+
+        col.separator()
+
         col.operator("v4r.save_pose")
 
         col.separator()
 
-        col.prop(context.area.spaces.active, "camera", icon='CAMERA_DATA')
+        row = col.row()
+        row.prop(context.area.spaces.active, "camera", icon='CAMERA_DATA')
+        row.prop(v4r_infos, "show_cameras", icon='HIDE_OFF', icon_only=True)
 
         col.separator()
 
@@ -239,6 +281,7 @@ def register():
     bpy.utils.register_class(V4R_OT_load_dataset)
     bpy.utils.register_class(V4R_OT_import_scene)
     bpy.utils.register_class(V4R_OT_save_pose)
+    bpy.utils.register_class(V4R_OT_align_object)
 
     bpy.types.Scene.v4r_infos = bpy.props.PointerProperty(type=V4R_PG_infos)
 
@@ -250,6 +293,7 @@ def unregister():
     bpy.utils.unregister_class(V4R_OT_load_dataset)
     bpy.utils.unregister_class(V4R_OT_import_scene)
     bpy.utils.unregister_class(V4R_OT_save_pose)
+    bpy.utils.unregister_class(V4R_OT_align_object)
 
     del bpy.types.Scene.v4r_infos
 

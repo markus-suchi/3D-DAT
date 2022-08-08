@@ -23,7 +23,7 @@ def multiscale_icp(source,
     current_transformation = init_transformation
     for i, scale in enumerate(range(len(max_iter))):  # multi-scale approach
         iter = max_iter[scale]
-        distance_threshold = config["voxel_size"] * 1.4
+        distance_threshold = config["voxel_size"] * 1.4  
         # print("voxel_size %f" % voxel_size[scale])
         source_down = source.voxel_down_sample(voxel_size[scale])
         target_down = target.voxel_down_sample(voxel_size[scale])
@@ -61,11 +61,14 @@ def multiscale_icp(source,
                                                      2.0,
                                                      max_nn=30))
             if config["icp_method"] == "point_to_plane":
+                # check if pointcloud has normals
                 result_icp = o3d.pipelines.registration.registration_icp(
                     source_down, target_down, distance_threshold,
                     current_transformation,
                     o3d.pipelines.registration.TransformationEstimationPointToPlane(),
-                    o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter))
+                    o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter,
+                                                                      relative_fitness=1e-6,
+                                                                      relative_rmse=1e-6))
             elif config["icp_method"] == "color":
                 conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
                         relative_fitness=1e-6,
@@ -87,7 +90,6 @@ def multiscale_icp(source,
                 source_down, target_down, voxel_size[scale] * 1.4,
                 result_icp.transformation)
 
-    print(result_icp)
     return (result_icp.transformation, information_matrix)
 
 

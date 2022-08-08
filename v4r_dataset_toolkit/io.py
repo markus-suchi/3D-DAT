@@ -206,6 +206,8 @@ class SceneFileReader:
         # How to separate recordings from annotations?
         self.object_pose_file = config.get('object_pose_file')
         self.reconstruction_file = config.get('reconstruction_file')
+        self.reconstruction_visual_file = config.get('reconstruction_visual_file')
+        self.reconstruction_align_file = config.get('reconstruction_align_file')
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
         self.object_library = self.get_object_library()
@@ -236,6 +238,8 @@ class SceneFileReader:
             f'associations_file: {self.associations_file}\n'\
             f'object_pose_file: {self.object_pose_file}\n'\
             f'reconstruction_file: {self.reconstruction_file}\n'\
+            f'reconstruction_visual_file: {self.reconstruction_visual_file}\n'\
+            f'reconstruction_align_file: {self.reconstruction_align_file}\n'\
             f'annotation_dir: {self.annotation_dir}\n'\
             f'mask_dir: {self.mask_dir}'
 
@@ -333,16 +337,21 @@ class SceneFileReader:
                 objects.append([self.object_library[id], pose])
         return objects
 
-    def get_scene(self, id):
-        # check if id is in this datasets scene id list
-        # access to specific scene should be a function
-        # access to specific rgbs/depths should be loaded on demand
-        pass
-
     def create_reconstruction(self, id):
         # create reconstruction.ply file for scene
         pass
 
     def get_reconstruction(self, id):
-        # read reconstruction for scene
-        pass
+        full_path = os.path.join(
+            self.root_dir, self.annotation_dir, id, self.reconstruction_file)
+        return MeshReader(full_path) 
+
+    def get_reconstructioni_visual(self, id):
+        full_path = os.path.join(
+            self.root_dir, self.annotation_dir, id, self.reconstruction_visual_file)
+        return MeshReader(full_path) 
+
+    def get_reconstruction_align(self, id):
+        full_path = os.path.join(
+            self.root_dir, self.annotation_dir, id, self.reconstruction_align_file)
+        return o3d.io.read_point_cloud(full_path) 
