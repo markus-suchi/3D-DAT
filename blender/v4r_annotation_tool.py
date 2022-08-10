@@ -23,16 +23,17 @@ def update_color_type(self, context):
 
 
 def update_show_cameras(self, context):
-    cameras = [ob for ob in bpy.data.collections['cameras'].objects if ob.type == 'CAMERA']
+    if 'cameras' in bpy.data.collections:
+        cameras = [ob for ob in bpy.data.collections['cameras'].objects if ob.type == 'CAMERA']
 
-    if not context.scene.v4r_infos.show_cameras:
-        for items in cameras:
-            items.hide_viewport = True
-        # only current camera is viewable
-        context.area.spaces.active.camera.hide_viewport = False
-    else:
-        for items in cameras:
-            items.hide_viewport = False
+        if not context.scene.v4r_infos.show_cameras:
+            for items in cameras:
+                items.hide_viewport = True
+            # only current camera is viewable
+            context.area.spaces.active.camera.hide_viewport = False
+        else:
+            for items in cameras:
+                items.hide_viewport = False
 
 
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
