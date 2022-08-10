@@ -277,6 +277,16 @@ class V4R_PT_annotation(bpy.types.Panel):
         else:
             row.enabled = True
 
+        row = col.row()
+        obj = context.active_object
+        if obj: 
+            row.prop(obj,"color")
+            if v4r_infos.color_type == 'VERTEX':
+                row.enabled = False
+            else:
+                row.enabled = True
+
+
 
 def register():
     bpy.utils.register_class(V4R_PG_scene_ids)

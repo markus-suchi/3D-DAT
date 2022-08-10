@@ -171,10 +171,8 @@ def load_reconstruction(SCENE_FILE_READER, id):
 
 
 def has_active_object_id():
-    if bpy.context.active_object:
-        if "v4r_id" in bpy.context.active_object:
-            return True
-    return False
+    obj = bpy.context.active_object
+    return (obj and obj in bpy.context.selected_objects and "v4r_id" in obj)
 
 
 def align_current_object(SCENE_FILE_READER, SCENE_MESH):
