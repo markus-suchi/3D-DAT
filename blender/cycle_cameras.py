@@ -56,8 +56,8 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
             next_camera = cam_objects[new_idx]
             current_camera.hide_viewport = next_camera.hide_viewport
             bpy.context.area.spaces.active.camera = next_camera
-            current_camera.hide_viewport = False
             bpy.context.area.spaces.active.use_local_camera = True
+            bpy.context.area.spaces.active.camera.hide_viewport = False
             return {'FINISHED'}
         else:
             return {'CANCELLED'}
