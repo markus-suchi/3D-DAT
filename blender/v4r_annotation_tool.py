@@ -24,7 +24,8 @@ def update_color_type(self, context):
 
 def update_show_cameras(self, context):
     if 'cameras' in bpy.data.collections:
-        cameras = [ob for ob in bpy.data.collections['cameras'].objects if ob.type == 'CAMERA']
+        cameras = [
+            ob for ob in bpy.data.collections['cameras'].objects if ob.type == 'CAMERA']
 
         if not context.scene.v4r_infos.show_cameras:
             for items in cameras:
@@ -98,7 +99,8 @@ class V4R_OT_import_scene(bpy.types.Operator):
             update_alpha(self, context)
             # set to vertex color
             context.scene.v4r_infos.color_type = "VERTEX"
-            SCENE_MESH = v4r_blender_utils.load_reconstruction(SCENE_FILE_READER, id)
+            SCENE_MESH = v4r_blender_utils.load_reconstruction(
+                SCENE_FILE_READER, id)
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -106,12 +108,12 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
     def invoke(self, context, event):
         # check if poses of objects has changed since import
-        doit= self.draw
+        doit = self.draw
         if doit:
             return context.window_manager.invoke_props_dialog(self)
         else:
             return self.execute(context)
-    
+
     def draw(self, context):
         if self.draw:
             row = self.layout.column(align=True)
@@ -189,11 +191,12 @@ class V4R_OT_save_pose(bpy.types.Operator):
             if output_list:
                 with open(full_path, 'w') as f:
                     yaml.dump(output_list, f, default_flow_style=False)
-                    self.report({'INFO'},"Saving successful")
+                    self.report({'INFO'}, "Saving successful")
             return {'FINISHED'}
         else:
             print("You need to open the dataset file first and import a scene.")
             return {'CANCELLED'}
+
 
 class V4R_OT_align_object(bpy.types.Operator):
     """ Align selected object to scene. """
@@ -210,7 +213,7 @@ class V4R_OT_align_object(bpy.types.Operator):
         global SCENE_FILE_READER
         global SCENE_MESH
         bpy.context.window.cursor_set("WAIT")
-        v4r_blender_utils.align_current_object(SCENE_FILE_READER, SCENE_MESH) 
+        v4r_blender_utils.align_current_object(SCENE_FILE_READER, SCENE_MESH)
         bpy.context.window.cursor_set("DEFAULT")
         return {'FINISHED'}
 
