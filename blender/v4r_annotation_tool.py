@@ -37,6 +37,14 @@ def update_show_cameras(self, context):
                 items.hide_viewport = False
 
 
+def update_show_reconstruction(self, context):
+    if 'reconstruction' in bpy.data.collections:
+        objects = [
+            ob for ob in bpy.data.collections['reconstruction'].objects if ob.type == 'MESH']
+
+        for items in objects:
+            items.hide_viewport = not context.scene.v4r_infos.show_reconstruction
+
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Scene Id",
                                    description="Identifyer for recorder scene."
@@ -56,7 +64,10 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
                                                ('VERTEX', 'VERTEX', 'Vertex Color')],
                                         update=update_color_type, options=set())
     show_cameras: bpy.props.BoolProperty(name="Show cameras", default=True,
-                                         update=update_show_cameras)
+                                         update=update_show_cameras, options=set())
+    show_reconstruction: bpy.props.BoolProperty(name="Show reconstruction", default=True,
+                                         update=update_show_reconstruction, options=set())
+
 
 
 # TODO: Need to define and visualize the current loaded scene
@@ -95,12 +106,14 @@ class V4R_OT_import_scene(bpy.types.Operator):
                 bpy.ops.object.select_all(action='DESELECT')
                 view.view_perspective = 'CAMERA'
 
-            bpy.context.window.cursor_set("DEFAULT")
             update_alpha(self, context)
+            update_show_cameras(self, context)
+            update_show_reconstruction(self, context)
             # set to vertex color
             context.scene.v4r_infos.color_type = "VERTEX"
             SCENE_MESH = v4r_blender_utils.load_reconstruction(
                 SCENE_FILE_READER, id)
+            bpy.context.window.cursor_set("DEFAULT")
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -259,17 +272,23 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         col.separator()
 
-        row = col.row()
-        row.prop(context.area.spaces.active, "camera", icon='CAMERA_DATA')
-        row.prop(v4r_infos, "show_cameras", icon='HIDE_OFF', icon_only=True)
+        col.prop(context.area.spaces.active, "camera", icon='CAMERA_DATA')
+        
+        col.separator()
+        
+        col.prop(v4r_infos, "show_cameras", text=" ", toggle=True, expand=False, icon='HIDE_OFF')
 
         col.separator()
 
-        row = col.row()
+        col.prop(v4r_infos, "show_reconstruction", text="Scene", toggle=True, expand=True, icon='HIDE_OFF')
+
+        col.separator()
+
+        row = col.row(align=True)
 
         row.prop(v4r_infos, "color_type", expand=True)
 
-        row = col.row()
+        row = col.row(align=True)
 
         color_alpha = row.prop(v4r_infos, "color_alpha", slider=True)
         if v4r_infos.color_type == 'VERTEX':

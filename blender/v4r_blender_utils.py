@@ -164,11 +164,41 @@ def get_cam_views():
     return cam_views
 
 def load_reconstruction(SCENE_FILE_READER, id):
+    # add reconstruction visuals as blender obj
+    reconstruction_visual_name = "reconstruction" 
+
+    if "reconstruction" not in bpy.data.collections:
+        obj_collection = bpy.ops.collection.create(name="reconstruction")
+        bpy.context.scene.collection.children.link(
+            bpy.data.collections["reconstruction"])
+ 
+    if(reconstruction_visual_name in bpy.data.objects):
+        print("Removing previouse reconstruction object.")
+        o = bpy.data.objects[reconstruction_visual_name]
+        bpy.data.objects.remove(o, do_unlink=True)
+    
+        if(reconstruction_visual_name in bpy.data.meshes):
+            print("Removing previouse reconstruction mesh.")
+            m = bpy.data.meshes[reconstruction_visual_name]
+            if m.users < 1:
+                print("remove m")
+                bpy.data.meshes.remove(m, do_unlink=True)
+
+
+    new_m = SCENE_FILE_READER.get_reconstruction_visual(id)
+    if(new_m):
+        print("Creating new reconstruction mesh.")
+        mesh = new_m.as_bpy_mesh()
+        mesh.name = reconstruction_visual_name
+        # name the object according to id
+        obj = bpy.data.objects.new(reconstruction_visual_name, mesh)
+        obj.lock_scale = [True, True, True]
+        obj.hide_select = True
+        bpy.data.collections["reconstruction"].objects.link(obj)
+
     # load the pointcloud reconstruction and return it
     return SCENE_FILE_READER.get_reconstruction_align(id)
-    # add reconstruction visuals as blender obj
-    # if reconstruction is there remove and reload new one
-
+ 
 
 def has_active_object_id():
     obj = bpy.context.active_object
