@@ -34,7 +34,7 @@ def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
         config = {'icp_method': 'point_to_plane',
                   'voxel_size': 0.004}
 
-        voxel_size = config["voxel_size"]
+        voxel_size = float(config.get("voxel_size"))
 
         transform, information_mat = multiscale_icp(
             source_pcd,
@@ -48,7 +48,7 @@ def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
         config = {'icp_method': 'point_to_point',
                   'voxel_size': 0.004}
 
-        voxel_size = config["voxel_size"]
+        voxel_size = float(config.get("voxel_size"))
 
         transform, information_mat = multiscale_icp(
             source_pcd,
@@ -57,8 +57,5 @@ def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
             [300, 300, 300, 300],
             config,
             init_transformation=transform)
-
-    # draw_registration_result_original_color(
-            # source_pcd, target_pcd, transform)
 
     return transform, information_mat

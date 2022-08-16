@@ -23,12 +23,12 @@ def multiscale_icp(source,
     current_transformation = init_transformation
     for i, scale in enumerate(range(len(max_iter))):  # multi-scale approach
         iter = max_iter[scale]
-        distance_threshold = config["voxel_size"] * 1.4  
+        distance_threshold = float(config.get("voxel_size")) * 1.4  
         # print("voxel_size %f" % voxel_size[scale])
         source_down = source.voxel_down_sample(voxel_size[scale])
         target_down = target.voxel_down_sample(voxel_size[scale])
 
-        if config["icp_method"] == "point_to_point":
+        if config.get("icp_method") == "point_to_point":
             result_icp = o3d.pipelines.registration.registration_icp(
                 source_down, target_down, distance_threshold,
                 current_transformation,
@@ -38,7 +38,7 @@ def multiscale_icp(source,
                     relative_fitness=1e-6,
                     relative_rmse=1e-6,
                         ))
-        elif config["icp_method"] == "robust_icp":
+        elif config.get("icp_method") == "robust_icp":
             print("Robust ICP")
             conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
                         relative_fitness=1e-6,
@@ -60,7 +60,7 @@ def multiscale_icp(source,
                 o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size[scale] *
                                                      2.0,
                                                      max_nn=30))
-            if config["icp_method"] == "point_to_plane":
+            if config.get("icp_method") == "point_to_plane":
                 # check if pointcloud has normals
                 result_icp = o3d.pipelines.registration.registration_icp(
                     source_down, target_down, distance_threshold,
@@ -69,7 +69,7 @@ def multiscale_icp(source,
                     o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter,
                                                                       relative_fitness=1e-6,
                                                                       relative_rmse=1e-6))
-            elif config["icp_method"] == "color":
+            elif config.get("icp_method") == "color":
                 conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
                         relative_fitness=1e-6,
                         relative_rmse=1e-6,
@@ -94,7 +94,7 @@ def multiscale_icp(source,
 
 
 def icp_refinement(rgbds, poses, intrinsic, config):
-    voxel_size = config["voxel_size"]
+    voxel_size = float(config.get("voxel_size"))
 
     for frame_id in tqdm(range(1, len(rgbds), 1), desc="Refinement"):
         source = o3d.geometry.PointCloud.create_from_rgbd_image(

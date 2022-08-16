@@ -38,32 +38,32 @@ class Reconstructor:
         self.path_dataset = path_dataset
         self.path_groundtruth = path_groundtruth
 
-    def get_reconstruction(self):
+    def create_reconstruction(self):
             n_files = len(self.color_files)
 
             volume = o3d.pipelines.integration.ScalableTSDFVolume(
-                voxel_length=self.config["tsdf_cubic_size"] / 512.0,
-                sdf_trunc=self.config["sdf_trunc"],
+                voxel_length=float(self.config.get("tsdf_cubic_size")) / 512.0,
+                sdf_trunc=float(self.config.get("sdf_trunc")),
                 color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
-
-            voxel_size = self.config["voxel_size"]
+            voxel_size = float(self.config.get("voxel_size"))
 
             rgbds = []
             for i, color_file in enumerate(self.color_files):
                 rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
                     color_file,
                     self.depth_files[i],
-                    depth_trunc=self.config["max_depth"],
+                    depth_trunc=float(self.config.get("max_depth")),
                     convert_rgb_to_intensity=False)
                 rgbds.append(rgbd_image)
 
             poses = [np.linalg.inv(pose.tf) for pose in self.poses] 
 
             #TODO: icp refinement does not provide good results for now 
-            if self.config["icp_refinement"] and self.path_groundtruth[-11:-4] != "refined":
+            if bool(self.config.get("icp_refinement")) and self.path_groundtruth[-11:-4] != "refined":
+                print("ICP refinement")
                 icp_refinement(rgbds, poses, self.intrinsic, config=self.config)
 
-                if self.config["save_refined"]:
+                if bool(self.config.get("save_refined")):
                     save_poses(poses, self.path_groundtruth[:-4] + "_refined.txt")
 
             for frame_id in tqdm(range(n_files), desc="Integration"):
@@ -80,11 +80,23 @@ class Reconstructor:
             cloud_name = os.path.join(self.path_dataset, "reconstruction_align.ply")
             cloud_down = sample_pointcloud(mesh_full, 500000, 500000)
             o3d.io.write_point_cloud(cloud_name, cloud_down, False, True)
- 
 
-            if not self.config["no_simplify"]:
+            if bool(self.config.get("cluster")):
+                print("Clustering mesh.")
+                triangle_clusters, cluster_n_triangles, cluster_area = (
+                            mesh_full.cluster_connected_triangles())
+                triangle_clusters = np.asarray(triangle_clusters)
+                cluster_n_triangles = np.asarray(cluster_n_triangles)
+
+                # Keep only largest cluster
+                largest_cluster_idx = cluster_n_triangles.argmax()
+                triangles_to_remove = triangle_clusters != largest_cluster_idx
+
+                mesh_full.remove_triangles_by_mask(triangles_to_remove)
+
+            if bool(self.config.get("simplify")):
                 print("Simplifying " + str(len(mesh_full.vertices)) + " vertices and " + str(len(mesh_full.triangles)) + " triangles")
-                mesh = mesh_full.simplify_quadric_decimation(target_number_of_triangles=self.config["triangles"])
+                mesh = mesh_full.simplify_quadric_decimation(target_number_of_triangles=int(self.config.get("triangles")))
                 print("Now         " + str(len(mesh.vertices)) + " vertices and " + str(len(mesh.triangles)) + " triangles")
                 mesh.compute_vertex_normals()
             else:
@@ -95,20 +107,6 @@ class Reconstructor:
             o3d.io.write_triangle_mesh(mesh_name, mesh, False, True)
 
 
-            if self.config["cluster"]:
-                print("Clustering mesh.")
-                triangle_clusters, cluster_n_triangles, cluster_area = (
-                            mesh.cluster_connected_triangles())
-                triangle_clusters = np.asarray(triangle_clusters)
-                cluster_n_triangles = np.asarray(cluster_n_triangles)
-
-                # Keep only largest cluster
-                largest_cluster_idx = cluster_n_triangles.argmax()
-                triangles_to_remove = triangle_clusters != largest_cluster_idx
-
-                mesh.remove_triangles_by_mask(triangles_to_remove)
-
-            if self.config["debug_mode"]:
+            if bool(self.config.get("debug_mode")):
                 o3d.visualization.draw_geometries([mesh])
-
 

@@ -3,7 +3,6 @@ import os
 import numpy as np
 import yaml
 import glob
-import configparser
 import math
 import errno
 
@@ -219,9 +218,8 @@ class SceneFileReader:
     @classmethod
     def create(cls, config_file):
         if(os.path.exists(config_file)):
-            cfg = configparser.ConfigParser()
-            # Check if file exists
-            cfg.read(config_file)
+            with open(config_file, 'r') as fp:
+                cfg = yaml.load(fp, Loader=yaml.FullLoader)
             return SceneFileReader(cfg['General'])
         else:
             raise FileNotFoundError(
@@ -346,10 +344,14 @@ class SceneFileReader:
             self.root_dir, self.annotation_dir, id, self.reconstruction_file)
         return MeshReader(full_path) 
 
-    def get_reconstructioni_visual(self, id):
+    def get_reconstruction_visual(self, id):
         full_path = os.path.join(
             self.root_dir, self.annotation_dir, id, self.reconstruction_visual_file)
-        return MeshReader(full_path) 
+        if(os.path.exists(full_path)):
+            return MeshReader(full_path)
+        else:
+            print(f"File {full_path} for visualizing reconstruction does not exist.")
+            return None
 
     def get_reconstruction_align(self, id):
         full_path = os.path.join(
