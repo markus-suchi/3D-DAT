@@ -6,7 +6,7 @@ import glob
 import os
 
 from v4r_dataset_toolkit import autoalign
-# TODO: get lokal used parameters like SCENE_FILE_READER and SCENE_MESH 
+# TODO: get local used parameters like SCENE_FILE_READER and SCENE_MESH 
 #       over here
 
 
@@ -60,8 +60,9 @@ def load_objects(SCENE_FILE_READER, id):
 
 
 def set_alpha(value=0):
-    for o in bpy.data.collections["objects"].objects:
-        o.color[3] = value
+    if "objects" in bpy.data.collections:
+        for o in bpy.data.collections["objects"].objects:
+            o.color[3] = value
 
 
 def load_cameras(SCENE_FILE_READER, id):
@@ -164,6 +165,23 @@ def get_cam_views():
     return cam_views
 
 def load_reconstruction(SCENE_FILE_READER, id):
+   return SCENE_FILE_READER.get_reconstruction_align(id)
+
+
+def remove_reconstruction_visual():
+    reconstruction_visual_name = "reconstruction" 
+
+    if(reconstruction_visual_name in bpy.data.objects):
+        o = bpy.data.objects[reconstruction_visual_name]
+        bpy.data.objects.remove(o, do_unlink=True)
+    
+        if(reconstruction_visual_name in bpy.data.meshes):
+            m = bpy.data.meshes[reconstruction_visual_name]
+            if m.users < 1:
+                bpy.data.meshes.remove(m, do_unlink=True)
+ 
+
+def load_reconstruction_visual(SCENE_FILE_READER, id):
     # add reconstruction visuals as blender obj
     reconstruction_visual_name = "reconstruction" 
 
@@ -171,20 +189,9 @@ def load_reconstruction(SCENE_FILE_READER, id):
         obj_collection = bpy.ops.collection.create(name="reconstruction")
         bpy.context.scene.collection.children.link(
             bpy.data.collections["reconstruction"])
- 
-    if(reconstruction_visual_name in bpy.data.objects):
-        print("Removing previouse reconstruction object.")
-        o = bpy.data.objects[reconstruction_visual_name]
-        bpy.data.objects.remove(o, do_unlink=True)
-    
-        if(reconstruction_visual_name in bpy.data.meshes):
-            print("Removing previouse reconstruction mesh.")
-            m = bpy.data.meshes[reconstruction_visual_name]
-            if m.users < 1:
-                print("remove m")
-                bpy.data.meshes.remove(m, do_unlink=True)
 
-
+    remove_reconstruction_visual()
+  
     new_m = SCENE_FILE_READER.get_reconstruction_visual(id)
     if(new_m):
         print("Creating new reconstruction mesh.")
@@ -195,9 +202,6 @@ def load_reconstruction(SCENE_FILE_READER, id):
         obj.lock_scale = [True, True, True]
         obj.hide_select = True
         bpy.data.collections["reconstruction"].objects.link(obj)
-
-    # load the pointcloud reconstruction and return it
-    return SCENE_FILE_READER.get_reconstruction_align(id)
  
 
 def has_active_object_id():

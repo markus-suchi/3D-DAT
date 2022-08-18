@@ -204,6 +204,7 @@ class SceneFileReader:
         self.associations_file = config.get('associations_file')
         # How to separate recordings from annotations?
         self.object_pose_file = config.get('object_pose_file')
+        self.reconstruction_dir = config.get('reconstruction_dir')
         self.reconstruction_file = config.get('reconstruction_file')
         self.reconstruction_visual_file = config.get('reconstruction_visual_file')
         self.reconstruction_align_file = config.get('reconstruction_align_file')
@@ -341,12 +342,12 @@ class SceneFileReader:
 
     def get_reconstruction(self, id):
         full_path = os.path.join(
-            self.root_dir, self.annotation_dir, id, self.reconstruction_file)
+            self.reconstruction_dir, id, self.reconstruction_file)
         return MeshReader(full_path) 
 
     def get_reconstruction_visual(self, id):
         full_path = os.path.join(
-            self.root_dir, self.annotation_dir, id, self.reconstruction_visual_file)
+            self.reconstruction_dir, id, self.reconstruction_visual_file)
         if(os.path.exists(full_path)):
             return MeshReader(full_path)
         else:
@@ -355,5 +356,5 @@ class SceneFileReader:
 
     def get_reconstruction_align(self, id):
         full_path = os.path.join(
-            self.root_dir, self.annotation_dir, id, self.reconstruction_align_file)
+            self.reconstruction_dir, id, self.reconstruction_align_file)
         return o3d.io.read_point_cloud(full_path) 

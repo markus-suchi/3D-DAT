@@ -45,6 +45,7 @@ def update_show_reconstruction(self, context):
         for items in objects:
             items.hide_viewport = not context.scene.v4r_infos.show_reconstruction
 
+
 class V4R_PG_scene_ids(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Scene Id",
                                    description="Identifyer for recorder scene."
@@ -108,11 +109,13 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
             update_alpha(self, context)
             update_show_cameras(self, context)
-            update_show_reconstruction(self, context)
             # set to vertex color
             context.scene.v4r_infos.color_type = "VERTEX"
             SCENE_MESH = v4r_blender_utils.load_reconstruction(
                 SCENE_FILE_READER, id)
+
+            v4r_blender_utils.remove_reconstruction_visual()
+            update_show_reconstruction(self, context)
             bpy.context.window.cursor_set("DEFAULT")
             return {'FINISHED'}
         else:
@@ -231,6 +234,30 @@ class V4R_OT_align_object(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class V4R_OT_import_reconstruction(bpy.types.Operator):
+    """ Import reconstruction of scene. """
+
+    bl_idname = "v4r.import_reconstruction"
+    bl_label = "Import Reconstruction"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return SCENE_FILE_READER is not None
+
+    def execute(self, context):
+        global SCENE_FILE_READER
+
+        bpy.context.window.cursor_set("WAIT")
+        id = context.scene.v4r_infos.scene_id
+        if(id):
+            v4r_blender_utils.load_reconstruction_visual(SCENE_FILE_READER, id)
+            update_show_reconstruction(self, context)
+ 
+        bpy.context.window.cursor_set("DEFAULT")
+        return {'FINISHED'}
+
+
 class V4R_PT_annotation(bpy.types.Panel):
     bl_label = "3D-SADT"
     bl_idname = "V4R_PT_annotation"
@@ -244,15 +271,11 @@ class V4R_PT_annotation(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
 
         scene = context.scene
         v4r_infos = scene.v4r_infos
 
-        flow = layout.grid_flow(row_major=True, columns=0,
-                                even_columns=True, even_rows=False, align=True)
-
-        col = flow.column()
+        col = layout.column(align=True)
         col.prop(v4r_infos, "dataset_file", icon="COLLECTION_NEW")
         col.operator("v4r.load_dataset")
 
@@ -272,39 +295,44 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         col.separator()
 
-        col.prop(context.area.spaces.active, "camera", icon='CAMERA_DATA')
+        row = col.row(align=True)
+        row.label(text="Camera:")
+        row.prop(context.area.spaces.active, "camera", text="", icon='CAMERA_DATA')
+        row.prop(v4r_infos, "show_cameras", toggle=True, expand=False, icon='HIDE_OFF', icon_only=True)
         
         col.separator()
         
-        col.prop(v4r_infos, "show_cameras", text=" ", toggle=True, expand=False, icon='HIDE_OFF')
-
-        col.separator()
-
-        col.prop(v4r_infos, "show_reconstruction", text="Scene", toggle=True, expand=True, icon='HIDE_OFF')
+        row = col.row(align=True)
+        row.label(text="Reconstruction:")
+        row.operator("v4r.import_reconstruction", text="Import")
+        row.prop(v4r_infos, "show_reconstruction", toggle=True, icon='HIDE_OFF', icon_only=True)
 
         col.separator()
 
         row = col.row(align=True)
-
+        row.label(text="Display:")
         row.prop(v4r_infos, "color_type", expand=True)
+        
+        col.separator()
 
         row = col.row(align=True)
-
-        color_alpha = row.prop(v4r_infos, "color_alpha", slider=True)
+        row.label(text="Scene Alpha:")
+        color_alpha = row.prop(v4r_infos, "color_alpha", text="", slider=True, expand=True)
         if v4r_infos.color_type == 'VERTEX':
             row.enabled = False
         else:
             row.enabled = True
 
-        row = col.row()
+        col.separator()
+
+        row = col.row(align=True)
         obj = context.active_object
         if obj: 
-            row.prop(obj,"color")
+            row.prop(obj,"color", text="Object Color:")
             if v4r_infos.color_type == 'VERTEX':
                 row.enabled = False
             else:
                 row.enabled = True
-
 
 
 def register():
@@ -315,6 +343,7 @@ def register():
     bpy.utils.register_class(V4R_OT_import_scene)
     bpy.utils.register_class(V4R_OT_save_pose)
     bpy.utils.register_class(V4R_OT_align_object)
+    bpy.utils.register_class(V4R_OT_import_reconstruction)
 
     bpy.types.Scene.v4r_infos = bpy.props.PointerProperty(type=V4R_PG_infos)
 
@@ -327,6 +356,7 @@ def unregister():
     bpy.utils.unregister_class(V4R_OT_import_scene)
     bpy.utils.unregister_class(V4R_OT_save_pose)
     bpy.utils.unregister_class(V4R_OT_align_object)
+    bpy.utils.unregister_class(V4R_OT_import_reconstruction)
 
     del bpy.types.Scene.v4r_infos
 

@@ -82,7 +82,7 @@ if __name__ == "__main__":
         scene_file_reader.camera_pose_file)
 
     path_dataset = os.path.join(
-        scene_file_reader.annotation_dir,
+        scene_file_reader.reconstruction_dir,
         args.scene_id)
 
     color_files = scene_file_reader.get_images_rgb(args.scene_id)
