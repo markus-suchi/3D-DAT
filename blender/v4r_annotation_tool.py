@@ -301,13 +301,6 @@ class V4R_PT_annotation(bpy.types.Panel):
         row.prop(v4r_infos, "show_cameras", toggle=True, expand=False, icon='HIDE_OFF', icon_only=True)
         
         col.separator()
-        
-        row = col.row(align=True)
-        row.label(text="Reconstruction:")
-        row.operator("v4r.import_reconstruction", text="Import")
-        row.prop(v4r_infos, "show_reconstruction", toggle=True, icon='HIDE_OFF', icon_only=True)
-
-        col.separator()
 
         row = col.row(align=True)
         row.label(text="Display:")
@@ -329,10 +322,20 @@ class V4R_PT_annotation(bpy.types.Panel):
         obj = context.active_object
         if obj: 
             row.prop(obj,"color", text="Object Color:")
-            if v4r_infos.color_type == 'VERTEX':
-                row.enabled = False
-            else:
-                row.enabled = True
+        else:
+            row.label(text="Object Color:")
+
+        if v4r_infos.color_type == 'VERTEX':
+            row.enabled = False
+        else:
+            row.enabled = True
+
+        col.separator()
+        
+        row = col.row(align=True)
+        row.label(text="Reconstruction:")
+        row.operator("v4r.import_reconstruction", text="Import")
+        row.prop(v4r_infos, "show_reconstruction", toggle=True, icon='HIDE_OFF', icon_only=True)
 
 
 def register():
