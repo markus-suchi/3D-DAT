@@ -5,6 +5,10 @@ import bpy
 import glob
 import os
 
+from v4r_dataset_toolkit import autoalign
+# TODO: get local used parameters like SCENE_FILE_READER and SCENE_MESH 
+#       over here
+
 
 # https://blender.stackexchange.com/questions/45138/buttons-for-custom-properties-dont-refresh-when-changed-by-other-parts-of-the-s
 # Auto refresh for custom collection property does not work without tagging a redraw
@@ -16,7 +20,6 @@ def tag_redraw(context, space_type="PROPERTIES", region_type="WINDOW"):
                 for region in area.regions:
                     if region.type == region_type:
                         region.tag_redraw()
-
 
 def tag_redraw_all():
     for area in bpy.context.screen.areas:
@@ -57,8 +60,9 @@ def load_objects(SCENE_FILE_READER, id):
 
 
 def set_alpha(value=0):
-    for o in bpy.data.collections["objects"].objects:
-        o.color[3] = value
+    if "objects" in bpy.data.collections:
+        for o in bpy.data.collections["objects"].objects:
+            o.color[3] = value
 
 
 def load_cameras(SCENE_FILE_READER, id):
@@ -159,3 +163,58 @@ def get_cam_views():
                 if current_perspective == 'CAMERA':
                     cam_views.append(space.region_3d)
     return cam_views
+
+def load_reconstruction(SCENE_FILE_READER, id):
+   return SCENE_FILE_READER.get_reconstruction_align(id)
+
+
+def remove_reconstruction_visual():
+    reconstruction_visual_name = "reconstruction" 
+
+    if(reconstruction_visual_name in bpy.data.objects):
+        o = bpy.data.objects[reconstruction_visual_name]
+        bpy.data.objects.remove(o, do_unlink=True)
+    
+        if(reconstruction_visual_name in bpy.data.meshes):
+            m = bpy.data.meshes[reconstruction_visual_name]
+            if m.users < 1:
+                bpy.data.meshes.remove(m, do_unlink=True)
+ 
+
+def load_reconstruction_visual(SCENE_FILE_READER, id):
+    # add reconstruction visuals as blender obj
+    reconstruction_visual_name = "reconstruction" 
+
+    if "reconstruction" not in bpy.data.collections:
+        obj_collection = bpy.ops.collection.create(name="reconstruction")
+        bpy.context.scene.collection.children.link(
+            bpy.data.collections["reconstruction"])
+
+    remove_reconstruction_visual()
+  
+    new_m = SCENE_FILE_READER.get_reconstruction_visual(id)
+    if(new_m):
+        print("Creating new reconstruction mesh.")
+        mesh = new_m.as_bpy_mesh()
+        mesh.name = reconstruction_visual_name
+        # name the object according to id
+        obj = bpy.data.objects.new(reconstruction_visual_name, mesh)
+        obj.lock_scale = [True, True, True]
+        obj.hide_select = True
+        bpy.data.collections["reconstruction"].objects.link(obj)
+ 
+
+def has_active_object_id():
+    obj = bpy.context.active_object
+    return (obj and obj in bpy.context.selected_objects and "v4r_id" in obj)
+
+
+def align_current_object(SCENE_FILE_READER, SCENE_MESH):
+    if has_active_object_id(): 
+        active = bpy.context.active_object
+        current_id = active["v4r_id"]
+        print(f"Align object {current_id}")
+        current_pose = active.matrix_world
+        current_mesh = SCENE_FILE_READER.object_library[current_id].mesh.as_o3d()
+        pose, info = autoalign.auto_align(current_mesh, SCENE_MESH,init_pose=current_pose)
+        active.matrix_world = mathutils.Matrix(pose)

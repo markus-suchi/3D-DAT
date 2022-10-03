@@ -1,27 +1,17 @@
 import bpy
-bl_info = {
-    "name": "Cycle Cameras",
-    "author": "CoDEmanX",
-    "version": (1, 0),
-    "blender": (2, 80, 0),
-    "location": "View3D > Ctrl + Shift + Left/Right Arrow",
-    "description": "Switch scene camera to next or previous camera object",
-    "warning": "",
-    "wiki_url": "",
-    "category": "3D View"}
 
 
 class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
     """Cycle through available cameras"""
     bl_idname = "view3d.cycle_cameras"
     bl_label = "Cycle Cameras"
-    bl_options = {'REGISTER','UNDO'}
+    # bl_options = {}
 
     direction: bpy.props.EnumProperty(
         name="Direction",
         items=(
-            ('FORWARD', "Forward", "Next camera (alphabetically)"),
-            ('BACKWARD', "Backward", "Previous camera (alphabetically)"),
+            ('FORWARD', "Forward", "Next camera"),
+            ('BACKWARD', "Backward", "Previous camera"),
         ),
         default='FORWARD'
     )
@@ -42,7 +32,6 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
             cam_objects = [ob for ob in cameras if ob.type == 'CAMERA']
 
             if len(cam_objects) == 0:
-                print("CANCELLED")
                 return {'CANCELLED'}
 
             try:
@@ -52,8 +41,12 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
             except ValueError:
                 new_idx = 0
 
-            bpy.context.area.spaces.active.camera = cam_objects[new_idx]
+            current_camera = bpy.context.area.spaces.active.camera
+            next_camera = cam_objects[new_idx]
+            current_camera.hide_viewport = next_camera.hide_viewport
+            bpy.context.area.spaces.active.camera = next_camera
             bpy.context.area.spaces.active.use_local_camera = True
+            bpy.context.area.spaces.active.camera.hide_viewport = False
             return {'FINISHED'}
         else:
             return {'CANCELLED'}

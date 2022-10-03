@@ -18,7 +18,7 @@ class MeshReader:
         return 'mesh_file: {self.file}'
 
     def as_o3d(self):
-        return o3d.io.read_triangle_mesh(self.file)
+        return o3d.io.read_triangle_mesh(self.file).scale(self.scale, [0 ,0, 0])
 
     def as_trimesh(self):
         scale_matrix = trimesh.transformations.scale_matrix(self.scale, [
@@ -35,7 +35,7 @@ class MeshReader:
         if self.file.endswith('.obj'):
             # load an .obj file:
             print("wavefront obj files not yet supported")
-            raise ValueError("File %s not supported" % self.file)
+            raise ValueError(f"File %s not supported", self.file)
             #bpy.ops.import_scene.obj(filepath=self.file)
         elif self.file.endswith('.ply'):
             mesh = import_ply.load_ply_mesh(self.file, "dummy")
