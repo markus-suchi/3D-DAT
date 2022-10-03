@@ -54,7 +54,10 @@ class V4R_PG_scene_ids(bpy.types.PropertyGroup):
 
 class V4R_PG_infos(bpy.types.PropertyGroup):
     dataset_file: bpy.props.StringProperty(name="Dataset")
+    # the current imported scene_id
     scene_id: bpy.props.StringProperty(name="Scene Id")
+    # the scene_id selected from the Scene Id List
+    selected_scene_id: bpy.props.StringProperty(name="Selected Scene Id")
     scene_ids: bpy.props.CollectionProperty(
         name="Scene Id List", type=V4R_PG_scene_ids)
     color_alpha: bpy.props.FloatProperty(name="Transparency", min=0.0, max=1.0,
@@ -94,9 +97,10 @@ class V4R_OT_import_scene(bpy.types.Operator):
             print(text)
             return {'CANCELLED'}
 
-        id = context.scene.v4r_infos.scene_id
+        id = context.scene.v4r_infos.selected_scene_id
         if(id):
             bpy.context.window.cursor_set("WAIT")
+            context.scene.v4r_infos.scene_id = id
             print("Importing Scene %s" % id)
             cam_views = v4r_blender_utils.get_cam_views()
             v4r_blender_utils.load_objects(SCENE_FILE_READER, id)
@@ -116,7 +120,9 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
             v4r_blender_utils.remove_reconstruction_visual()
             update_show_reconstruction(self, context)
+
             bpy.context.window.cursor_set("DEFAULT")
+
             return {'FINISHED'}
         else:
             print("No scene selected. Import canceled.")
@@ -161,7 +167,7 @@ class V4R_OT_load_dataset(bpy.types.Operator):
 
         # Set to first entry
         if context.scene.v4r_infos.scene_ids:
-            context.scene.v4r_infos.scene_id = context.scene.v4r_infos.scene_ids[0].name
+            context.scene.v4r_infos.selected_scene_id = context.scene.v4r_infos.scene_ids[0].name
 
         # Blender does not update content of dropdownlists for custom property collections
         v4r_blender_utils.tag_redraw_all()
@@ -183,7 +189,6 @@ class V4R_OT_save_pose(bpy.types.Operator):
         global SCENE_FILE_READER
 
         id = bpy.context.scene.v4r_infos.scene_id
-
         objects_available = bpy.data.collections.get("objects")
         if not objects_available:
             print("No objects to save a pose available.")
@@ -223,7 +228,10 @@ class V4R_OT_align_object(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return (v4r_blender_utils.has_active_object_id() and context.area.type == 'VIEW_3D')
+        global SCENE_FILE_READER
+        global SCENE_MESH
+        return (v4r_blender_utils.has_active_object_id() and context.area.type == 'VIEW_3D' and
+                SCENE_FILE_READER and SCENE_MESH)
 
     def execute(self, context):
         global SCENE_FILE_READER
@@ -259,7 +267,7 @@ class V4R_OT_import_reconstruction(bpy.types.Operator):
 
 
 class V4R_PT_annotation(bpy.types.Panel):
-    bl_label = "3D-SADT"
+    bl_label = "Annotate"
     bl_idname = "V4R_PT_annotation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -267,23 +275,20 @@ class V4R_PT_annotation(bpy.types.Panel):
 
     @classmethod
     def poll(self, context):
-        return context.area.type == 'VIEW_3D'
+        scene = context.scene
+        v4r_infos = scene.v4r_infos
+        return context.area.type == 'VIEW_3D' and v4r_infos.scene_id
 
     def draw(self, context):
         layout = self.layout
-
         scene = context.scene
         v4r_infos = scene.v4r_infos
-
+        
         col = layout.column(align=True)
-        col.prop(v4r_infos, "dataset_file", icon="COLLECTION_NEW")
-        col.operator("v4r.load_dataset")
 
-        col.separator()
-
-        col.prop_search(v4r_infos, "scene_id", v4r_infos,
-                        "scene_ids", icon="IMAGE_DATA")
-        col.operator("v4r.import_scene")
+        row = col.row(align=True)
+        row.prop(v4r_infos, "scene_id", text="Scene:", icon='IMAGE_DATA')
+        row.enabled = False
 
         col.separator()
 
@@ -337,11 +342,39 @@ class V4R_PT_annotation(bpy.types.Panel):
         row.operator("v4r.import_reconstruction", text="Import")
         row.prop(v4r_infos, "show_reconstruction", toggle=True, icon='HIDE_OFF', icon_only=True)
 
+class V4R_PT_import(bpy.types.Panel):
+    bl_label = "Import"
+    bl_idname = "V4R_PT_import"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "3D-SADT"
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == 'VIEW_3D'
+
+    def draw(self, context):
+        layout = self.layout
+
+        scene = context.scene
+        v4r_infos = scene.v4r_infos
+
+        col = layout.column(align=True)
+        col.prop(v4r_infos, "dataset_file", icon="COLLECTION_NEW")
+        col.operator("v4r.load_dataset")
+
+        col.separator()
+
+        col.prop_search(v4r_infos, "selected_scene_id", v4r_infos,
+                        "scene_ids", icon="IMAGE_DATA",text="Scene")
+        col.operator("v4r.import_scene")
+
 
 def register():
     bpy.utils.register_class(V4R_PG_scene_ids)
     bpy.utils.register_class(V4R_PG_infos)
     bpy.utils.register_class(V4R_PT_annotation)
+    bpy.utils.register_class(V4R_PT_import)
     bpy.utils.register_class(V4R_OT_load_dataset)
     bpy.utils.register_class(V4R_OT_import_scene)
     bpy.utils.register_class(V4R_OT_save_pose)
@@ -355,6 +388,7 @@ def unregister():
     bpy.utils.unregister_class(V4R_PG_scene_ids)
     bpy.utils.unregister_class(V4R_PG_infos)
     bpy.utils.unregister_class(V4R_PT_annotation)
+    bpy.utils.unregister_class(V4R_PT_import)
     bpy.utils.unregister_class(V4R_OT_load_dataset)
     bpy.utils.unregister_class(V4R_OT_import_scene)
     bpy.utils.unregister_class(V4R_OT_save_pose)
