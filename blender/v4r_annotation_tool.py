@@ -51,6 +51,16 @@ class V4R_PG_scene_ids(bpy.types.PropertyGroup):
                                    description="Identifyer for recorder scene."
                                    )
 
+class V4R_PG_object_list(bpy.types.PropertyGroup):
+    id: bpy.props.StringProperty(name="Object Id",
+                                 description="Object identifyer."
+                                 )
+
+    pose: bpy.props.FloatVectorProperty(name="Pose",
+                                        description="Object pose.",
+                                        size=16
+                                        )
+
 
 class V4R_PG_infos(bpy.types.PropertyGroup):
     dataset_file: bpy.props.StringProperty(name="Dataset")
@@ -71,6 +81,8 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
                                          update=update_show_cameras, options=set())
     show_reconstruction: bpy.props.BoolProperty(name="Show reconstruction", default=True,
                                          update=update_show_reconstruction, options=set())
+    object_list: bpy.props.CollectionProperty(
+        name="Loaded Objects", type=V4R_PG_object_list)
 
 
 
@@ -130,7 +142,8 @@ class V4R_OT_import_scene(bpy.types.Operator):
 
     def invoke(self, context, event):
         # check if poses of objects has changed since import
-        doit = self.draw
+        # compare current objects with loaded_object list
+        doit = v4r_blender_utils.has_scene_changed() 
         if doit:
             return context.window_manager.invoke_props_dialog(self)
         else:
@@ -371,6 +384,7 @@ class V4R_PT_import(bpy.types.Panel):
 
 
 def register():
+    bpy.utils.register_class(V4R_PG_object_list)
     bpy.utils.register_class(V4R_PG_scene_ids)
     bpy.utils.register_class(V4R_PG_infos)
     bpy.utils.register_class(V4R_PT_annotation)
@@ -385,6 +399,7 @@ def register():
 
 
 def unregister():
+    bpy.utils.unregister_class(V4R_PG_object_list)
     bpy.utils.unregister_class(V4R_PG_scene_ids)
     bpy.utils.unregister_class(V4R_PG_infos)
     bpy.utils.unregister_class(V4R_PT_annotation)

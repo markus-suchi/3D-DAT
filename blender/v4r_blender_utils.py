@@ -4,6 +4,7 @@ import numpy as np
 import bpy
 import glob
 import os
+from collections import Counter
 
 from v4r_dataset_toolkit import autoalign
 # TODO: get local used parameters like SCENE_FILE_READER and SCENE_MESH 
@@ -44,6 +45,8 @@ def load_objects(SCENE_FILE_READER, id):
             if m.users < 1:
                 bpy.data.meshes.remove(m, do_unlink=True)
 
+    loaded_objects = bpy.context.scene.v4r_infos.object_list
+    loaded_objects.clear()
     for item in objects:
         mesh = item[0].mesh.as_bpy_mesh()
         # name the object according to id
@@ -51,12 +54,16 @@ def load_objects(SCENE_FILE_READER, id):
         mesh.name = obj_id + "_" + item[0].name
         obj = bpy.data.objects.new(mesh.name, mesh)
         # transform to saved pose
-        obj.matrix_world = mathutils.Matrix(np.asarray(item[1]).reshape(4, 4))
+        object_pose = np.asarray(item[1])
+        obj.matrix_world = mathutils.Matrix(object_pose.reshape(4, 4))
         r, g, b = item[0].color
         obj.color = (r/255., g/255., b/255., 1)
         obj["v4r_id"] = obj_id
         obj.lock_scale = [True, True, True]
         bpy.data.collections["objects"].objects.link(obj)
+        add = loaded_objects.add()
+        add.id = obj_id
+        add.pose = object_pose
 
 
 def set_alpha(value=0):
@@ -218,3 +225,28 @@ def align_current_object(SCENE_FILE_READER, SCENE_MESH):
         current_mesh = SCENE_FILE_READER.object_library[current_id].mesh.as_o3d()
         pose, info = autoalign.auto_align(current_mesh, SCENE_MESH,init_pose=current_pose)
         active.matrix_world = mathutils.Matrix(pose)
+
+
+def has_scene_changed():
+    loaded_objects = bpy.context.scene.v4r_infos.object_list
+    if not loaded_objects:
+        print("Nothing was loaded yet")
+        return False
+
+    if bpy.data.collections.get("objects"):
+        objects_available = [(item.get("v4r_id"), numpy_to_tuple(np.asarray(item.matrix_world).flatten())) 
+                              for item in bpy.data.collections.get("objects").objects 
+                              if item.get("v4r_id")]
+
+        objects_loaded = [(item.id, numpy_to_tuple(np.asarray(item.pose))) 
+                          for item in loaded_objects]
+
+        return Counter(objects_available) != Counter(objects_loaded)
+    else:
+        print("No objects")
+        return False
+
+
+def numpy_to_tuple(x):
+    return tuple(map(tuple,[np.round(x,5)]))
+
