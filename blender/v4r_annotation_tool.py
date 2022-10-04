@@ -150,11 +150,10 @@ class V4R_OT_import_scene(bpy.types.Operator):
             return self.execute(context)
 
     def draw(self, context):
-        if self.draw:
-            row = self.layout.column(align=True)
-            row.label(text="There are unsaved changes!", icon='ERROR')
-            row.label(text="Press 'OK' to proceed loading and loose changes.")
-            row.label(text="Press 'Esc' to cancel.")
+        row = self.layout.column(align=True)
+        row.label(text="There are unsaved changes!", icon='ERROR')
+        row.label(text="Press 'OK' to proceed loading and loose changes.")
+        row.label(text="Press 'Esc' to cancel.")
 
 
 class V4R_OT_load_dataset(bpy.types.Operator):
@@ -207,25 +206,26 @@ class V4R_OT_save_pose(bpy.types.Operator):
             print("No objects to save a pose available.")
             return {'FINISHED'}
         elif SCENE_FILE_READER and id:
-            full_path = os.path.join(SCENE_FILE_READER.root_dir,
-                                     SCENE_FILE_READER.annotation_dir,
-                                     id,
-                                     SCENE_FILE_READER.object_pose_file)
+            # full_path = os.path.join(SCENE_FILE_READER.root_dir,
+                                     # SCENE_FILE_READER.annotation_dir,
+                                     # id,
+                                     # SCENE_FILE_READER.object_pose_file)
 
-            print("Saving poses to: " + full_path)
-            output_list = []
-            for obj in bpy.data.collections['objects'].objects:
-                print("Saving object %s, id %s." % (obj.name, obj["v4r_id"]))
-                pose = np.zeros((4, 4))
-                pose[:, :] = obj.matrix_world
-                pose = pose.reshape(-1)
-                output_list.append(
-                    {"id": obj["v4r_id"], "pose": pose.tolist()})
+            # print("Saving poses to: " + full_path)
+            # output_list = []
+            # for obj in bpy.data.collections['objects'].objects:
+                # print("Saving object %s, id %s." % (obj.name, obj["v4r_id"]))
+                # pose = np.zeros((4, 4))
+                # pose[:, :] = obj.matrix_world
+                # pose = pose.reshape(-1)
+                # output_list.append(
+                    # {"id": obj["v4r_id"], "pose": pose.tolist()})
 
-            if output_list:
-                with open(full_path, 'w') as f:
-                    yaml.dump(output_list, f, default_flow_style=False)
-                    self.report({'INFO'}, "Saving successful")
+            # if output_list:
+                # with open(full_path, 'w') as f:
+                    # yaml.dump(output_list, f, default_flow_style=False)
+                    # self.report({'INFO'}, "Saving successful")
+            v4r_blender_utils.save_pose(SCENE_FILE_READER, id)
             return {'FINISHED'}
         else:
             print("You need to open the dataset file first and import a scene.")

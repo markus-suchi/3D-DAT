@@ -3,6 +3,7 @@ import math
 import numpy as np
 import bpy
 import glob
+import yaml
 import os
 from collections import Counter
 
@@ -64,6 +65,38 @@ def load_objects(SCENE_FILE_READER, id):
         add = loaded_objects.add()
         add.id = obj_id
         add.pose = object_pose
+
+
+def save_pose(SCENE_FILE_READER, id):
+    full_path = os.path.join(SCENE_FILE_READER.root_dir,
+                             SCENE_FILE_READER.annotation_dir,
+                             id,
+                             SCENE_FILE_READER.object_pose_file)
+
+    print("Saving poses to: " + full_path)
+    loaded_objects = bpy.context.scene.v4r_infos.object_list
+    loaded_objects.clear()
+    output_list = []
+
+    if "objects" not in bpy.data.collections:
+        # no object collection
+        return
+
+    for obj in bpy.data.collections['objects'].objects:
+        print("Saving object %s, id %s." % (obj.name, obj["v4r_id"]))
+        pose = np.zeros((4, 4))
+        pose[:, :] = obj.matrix_world
+        pose = pose.reshape(-1)
+        output_list.append(
+            {"id": obj["v4r_id"], "pose": pose.tolist()})
+        add = loaded_objects.add()
+        add.id = obj["v4r_id"]
+        add.pose = pose
+    
+    with open(full_path, 'w') as f:
+        yaml.dump(output_list, f, default_flow_style=False)
+
+    # update loaded object list
 
 
 def set_alpha(value=0):
