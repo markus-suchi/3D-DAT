@@ -299,10 +299,6 @@ def has_scene_changed():
         return False
 
 
-def numpy_to_tuple(x):
-    return tuple(map(tuple,[np.round(x,5)]))
-
-
 def equal_lists(a,b):
     if len(a) != len(b):
         return False
