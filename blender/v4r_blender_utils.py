@@ -27,6 +27,27 @@ def tag_redraw_all():
     for area in bpy.context.screen.areas:
         area.tag_redraw()
 
+def add_object(SCENE_FILE_READER, id):
+    if(SCENE_FILE_READER):
+        obj_lib = SCENE_FILE_READER.get_object_library()
+        if obj_lib:
+            object = obj_lib.get(id)
+            print(object)
+            if object:
+                mesh = object.mesh.as_bpy_mesh()
+                # name the object according to id
+                obj_id = str(object.id)
+                mesh.name = obj_id + "_" + object.name
+                obj = bpy.data.objects.new(mesh.name, mesh)
+                # transform to saved pose
+                object_pose = np.eye(4,4)
+                obj.matrix_world = mathutils.Matrix(object_pose)
+                r, g, b = object.color
+                obj.color = (r/255., g/255., b/255., 1)
+                obj["v4r_id"] = obj_id
+                obj.lock_scale = [True, True, True]
+                bpy.data.collections["objects"].objects.link(obj)
+
 
 def load_objects(SCENE_FILE_READER, id):
     objects = []
@@ -95,8 +116,6 @@ def save_pose(SCENE_FILE_READER, id):
     
     with open(full_path, 'w') as f:
         yaml.dump(output_list, f, default_flow_style=False)
-
-    # update loaded object list
 
 
 def set_alpha(value=0):
@@ -267,14 +286,14 @@ def has_scene_changed():
         return False
 
     if bpy.data.collections.get("objects"):
-        objects_available = [(item.get("v4r_id"), numpy_to_tuple(np.asarray(item.matrix_world).flatten())) 
+        objects_available = [(item.get("v4r_id"), np.asarray(item.matrix_world).flatten()) 
                               for item in bpy.data.collections.get("objects").objects 
                               if item.get("v4r_id")]
 
-        objects_loaded = [(item.id, numpy_to_tuple(np.asarray(item.pose))) 
+        objects_loaded = [(item.id, np.asarray(item.pose)) 
                           for item in loaded_objects]
 
-        return Counter(objects_available) != Counter(objects_loaded)
+        return not equal_lists(objects_available, objects_loaded)
     else:
         print("No objects")
         return False
@@ -282,4 +301,25 @@ def has_scene_changed():
 
 def numpy_to_tuple(x):
     return tuple(map(tuple,[np.round(x,5)]))
+
+
+def equal_lists(a,b):
+    if len(a) != len(b):
+        return False
+
+    def cmp(x,l):
+        for i,c in enumerate(l) or []:
+            if c[0] == x[0]:
+                diff = np.abs(c[1] - x[1])
+                if np.all(diff < 0.00001):
+                    l.pop(i)
+                    return l
+        return l
+
+    c = b.copy()
+    for x in a:
+        c = cmp(x,c)
+
+    return not c
+
 
