@@ -327,13 +327,14 @@ class SceneFileReader:
             self.root_dir, self.annotation_dir, id, self.object_pose_file)
 
         objects = []
-        with open(full_path) as fp:
-            for items in (yaml.load(fp, Loader=yaml.FullLoader)):
-                id = items.get("id")
-                pose = items.get("pose")
-                if not pose:
-                    pose = np.eye(4).tolist()
-                objects.append([self.object_library[id], pose])
+        if os.path.exists(full_path):
+            with open(full_path) as fp:
+                for items in (yaml.load(fp, Loader=yaml.FullLoader)):
+                    id = items.get("id")
+                    pose = items.get("pose")
+                    if not pose:
+                        pose = np.eye(4).tolist()
+                    objects.append([self.object_library[id], pose])
         return objects
 
     def create_reconstruction(self, id):
