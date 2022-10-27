@@ -327,13 +327,14 @@ class SceneFileReader:
             self.root_dir, self.annotation_dir, id, self.object_pose_file)
 
         objects = []
-        with open(full_path) as fp:
-            for items in (yaml.load(fp, Loader=yaml.FullLoader)):
-                id = items.get("id")
-                pose = items.get("pose")
-                if not pose:
-                    pose = np.eye(4).tolist()
-                objects.append([self.object_library[id], pose])
+        if os.path.exists(full_path):
+            with open(full_path) as fp:
+                for items in (yaml.load(fp, Loader=yaml.FullLoader)):
+                    id = items.get("id")
+                    pose = items.get("pose")
+                    if not pose:
+                        pose = np.eye(4).tolist()
+                    objects.append([self.object_library[id], pose])
         return objects
 
     def create_reconstruction(self, id):
@@ -343,7 +344,11 @@ class SceneFileReader:
     def get_reconstruction(self, id):
         full_path = os.path.join(
             self.reconstruction_dir, id, self.reconstruction_file)
-        return MeshReader(full_path) 
+        if(os.path.exists(full_path)):
+            return MeshReader(full_path)
+        else:
+            print(f"File {full_path} for reconstruction does not exist.")
+            return None
 
     def get_reconstruction_visual(self, id):
         full_path = os.path.join(
@@ -357,4 +362,9 @@ class SceneFileReader:
     def get_reconstruction_align(self, id):
         full_path = os.path.join(
             self.reconstruction_dir, id, self.reconstruction_align_file)
-        return o3d.io.read_point_cloud(full_path) 
+        if(os.path.exists(full_path)):
+            return o3d.io.read_point_cloud(full_path)
+        else:
+            print(f"File {full_path} for  auto-align does not exist.")
+            return None
+

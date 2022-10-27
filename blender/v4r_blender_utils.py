@@ -3,7 +3,9 @@ import math
 import numpy as np
 import bpy
 import glob
+import yaml
 import os
+from collections import Counter
 
 from v4r_dataset_toolkit import autoalign
 # TODO: get local used parameters like SCENE_FILE_READER and SCENE_MESH 
@@ -25,6 +27,27 @@ def tag_redraw_all():
     for area in bpy.context.screen.areas:
         area.tag_redraw()
 
+def add_object(SCENE_FILE_READER, id):
+    if(SCENE_FILE_READER):
+        obj_lib = SCENE_FILE_READER.get_object_library()
+        if obj_lib:
+            object = obj_lib.get(id)
+            print(object)
+            if object:
+                mesh = object.mesh.as_bpy_mesh()
+                # name the object according to id
+                obj_id = str(object.id)
+                mesh.name = obj_id + "_" + object.name
+                obj = bpy.data.objects.new(mesh.name, mesh)
+                # transform to saved pose
+                object_pose = np.eye(4,4)
+                obj.matrix_world = mathutils.Matrix(object_pose)
+                r, g, b = object.color
+                obj.color = (r/255., g/255., b/255., 1)
+                obj["v4r_id"] = obj_id
+                obj.lock_scale = [True, True, True]
+                bpy.data.collections["objects"].objects.link(obj)
+
 
 def load_objects(SCENE_FILE_READER, id):
     objects = []
@@ -44,6 +67,8 @@ def load_objects(SCENE_FILE_READER, id):
             if m.users < 1:
                 bpy.data.meshes.remove(m, do_unlink=True)
 
+    loaded_objects = bpy.context.scene.v4r_infos.object_list
+    loaded_objects.clear()
     for item in objects:
         mesh = item[0].mesh.as_bpy_mesh()
         # name the object according to id
@@ -51,12 +76,46 @@ def load_objects(SCENE_FILE_READER, id):
         mesh.name = obj_id + "_" + item[0].name
         obj = bpy.data.objects.new(mesh.name, mesh)
         # transform to saved pose
-        obj.matrix_world = mathutils.Matrix(np.asarray(item[1]).reshape(4, 4))
+        object_pose = np.asarray(item[1])
+        obj.matrix_world = mathutils.Matrix(object_pose.reshape(4, 4))
         r, g, b = item[0].color
         obj.color = (r/255., g/255., b/255., 1)
         obj["v4r_id"] = obj_id
         obj.lock_scale = [True, True, True]
         bpy.data.collections["objects"].objects.link(obj)
+        add = loaded_objects.add()
+        add.id = obj_id
+        add.pose = object_pose
+
+
+def save_pose(SCENE_FILE_READER, id):
+    full_path = os.path.join(SCENE_FILE_READER.root_dir,
+                             SCENE_FILE_READER.annotation_dir,
+                             id,
+                             SCENE_FILE_READER.object_pose_file)
+
+    print("Saving poses to: " + full_path)
+    loaded_objects = bpy.context.scene.v4r_infos.object_list
+    loaded_objects.clear()
+    output_list = []
+
+    if "objects" not in bpy.data.collections:
+        # no object collection
+        return
+
+    for obj in bpy.data.collections['objects'].objects:
+        print("Saving object %s, id %s." % (obj.name, obj["v4r_id"]))
+        pose = np.zeros((4, 4))
+        pose[:, :] = obj.matrix_world
+        pose = pose.reshape(-1)
+        output_list.append(
+            {"id": obj["v4r_id"], "pose": pose.tolist()})
+        add = loaded_objects.add()
+        add.id = obj["v4r_id"]
+        add.pose = pose
+    
+    with open(full_path, 'w') as f:
+        yaml.dump(output_list, f, default_flow_style=False)
 
 
 def set_alpha(value=0):
@@ -218,3 +277,45 @@ def align_current_object(SCENE_FILE_READER, SCENE_MESH):
         current_mesh = SCENE_FILE_READER.object_library[current_id].mesh.as_o3d()
         pose, info = autoalign.auto_align(current_mesh, SCENE_MESH,init_pose=current_pose)
         active.matrix_world = mathutils.Matrix(pose)
+
+
+def has_scene_changed():
+    loaded_objects = bpy.context.scene.v4r_infos.object_list
+    if not loaded_objects:
+        print("Nothing was loaded yet")
+        return False
+
+    if bpy.data.collections.get("objects"):
+        objects_available = [(item.get("v4r_id"), np.asarray(item.matrix_world).flatten()) 
+                              for item in bpy.data.collections.get("objects").objects 
+                              if item.get("v4r_id")]
+
+        objects_loaded = [(item.id, np.asarray(item.pose)) 
+                          for item in loaded_objects]
+
+        return not equal_lists(objects_available, objects_loaded)
+    else:
+        print("No objects")
+        return False
+
+
+def equal_lists(a,b):
+    if len(a) != len(b):
+        return False
+
+    def cmp(x,l):
+        for i,c in enumerate(l) or []:
+            if c[0] == x[0]:
+                diff = np.abs(c[1] - x[1])
+                if np.all(diff < 0.00001):
+                    l.pop(i)
+                    return l
+        return l
+
+    c = b.copy()
+    for x in a:
+        c = cmp(x,c)
+
+    return not c
+
+
