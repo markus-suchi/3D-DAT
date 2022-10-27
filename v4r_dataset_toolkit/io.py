@@ -9,26 +9,6 @@ import errno
 from .objects import ObjectLibrary
 from .meshreader import MeshReader
 
-# There are 3 different entities which require poses
-# 1. Cameras: Camerinfo + Pose vector
-# 2. Object: ObjectId + Pose
-# 3. Marker: MarkerId/Name + Pose vector
-# If Camera is not registered, the camera pose can be retrieved by the inverse of the marker pose
-# Markers can also be used to retrieve reference point in world coordinates
-# a) groundtruth_handeye.txt has all the poses for regeistered cameras with
-# the base of the arm as the origin.
-# b) groundtruth.txt marker on markersheet with rgb camera frame as the origin.
-# poses from groundtruth text file, each line
-# groundtruth/ros/scipy:   tx, ty, tz, rx, ry, rz, rw
-# ->
-# to open3d/blender/Eigen: tx, ty, tz, rw, rx, ry, rz
-# poses from objects pose yaml file
-# translation(tx,ty,tz) & rotation(rx, ry, rz, rw)
-# get rotation as quaternion (x, y, z, w) or (w, x, y, z)
-# get rotation as 3x3 numpy array
-# get translation as 3x1 numpy array
-# get transformation matrix as 4x4 numpy array
-
 
 def get_file_list(path, extensions):
     file_list = []
@@ -176,15 +156,13 @@ class ObjectPose:
 
 
 class Scene:
-    def __init__(self, scene_id=None, rgb=None, depth=None, cameras=None, objects=None, markers=None, reconstruction_file=None):
+    def __init__(self, scene_id=None, rgb=None, depth=None, cameras=None, objects=None, reconstruction_file=None):
         self.scene_id = scene_id
         self.rgb_files = rgb_files or []  # o3d image
         self.depth_files = depth_files or []  # o3d image
         self.cameras = cameras or []  # o3d camera trajectory
         # objects/object id with numpy 4x4 array (saved as quaternion)
         self.objects = objects or []
-        # numpy 4x4 array (saved as quaternion), can there be several markers? Only use this if no cameras?
-        self.markers = markers or []
         self.reconstruction = MeshReader(
             reconstruction_file) if reconstruction_file else None
 
@@ -198,10 +176,6 @@ class SceneFileReader:
         self.camera_pose_file = config.get('camera_pose_file')
         self.camera_intrinsics_file = config.get('camera_intrinsics_file')
         self.object_library_file = config.get('object_library_file')
-        # The associations file is a list of corresponding depth and rgb images
-        # It is used for standalone script to create reconsturctions
-        # TODO: re-evaluate if this is still needed after io is complete
-        self.associations_file = config.get('associations_file')
         # How to separate recordings from annotations?
         self.object_pose_file = config.get('object_pose_file')
         self.reconstruction_dir = config.get('reconstruction_dir')
@@ -221,6 +195,8 @@ class SceneFileReader:
         if(os.path.exists(config_file)):
             with open(config_file, 'r') as fp:
                 cfg = yaml.load(fp, Loader=yaml.FullLoader)
+                if not cfg.get('root_dir'):
+                    cfg['General']['root_dir']=os.path.dirname(os.path.abspath(config_file))
             return SceneFileReader(cfg['General'])
         else:
             raise FileNotFoundError(
@@ -241,11 +217,6 @@ class SceneFileReader:
             f'reconstruction_align_file: {self.reconstruction_align_file}\n'\
             f'annotation_dir: {self.annotation_dir}\n'\
             f'mask_dir: {self.mask_dir}'
-
-    # def get_camera_info(self):
-        # full_path = os.path.join(
-            # self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
-        # return CameraInfo.create(full_path)
 
     def get_camera_info_scene(self, id):
         full_path = os.path.join(
@@ -336,10 +307,6 @@ class SceneFileReader:
                         pose = np.eye(4).tolist()
                     objects.append([self.object_library[id], pose])
         return objects
-
-    def create_reconstruction(self, id):
-        # create reconstruction.ply file for scene
-        pass
 
     def get_reconstruction(self, id):
         full_path = os.path.join(

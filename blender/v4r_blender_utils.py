@@ -48,7 +48,6 @@ def add_object(SCENE_FILE_READER, id):
                 obj.lock_scale = [True, True, True]
                 bpy.data.collections["objects"].objects.link(obj)
 
-
 def load_objects(SCENE_FILE_READER, id):
     objects = []
     if(SCENE_FILE_READER):
@@ -60,7 +59,6 @@ def load_objects(SCENE_FILE_READER, id):
             bpy.data.collections["objects"])
     else:
         # Remove previous loaded objects
-        # TODO: do not reimport already loaded objects, just reset position
         for o in bpy.data.collections["objects"].objects:
             m = bpy.data.meshes[o.name]
             bpy.data.objects.remove(o, do_unlink=True)
@@ -113,7 +111,8 @@ def save_pose(SCENE_FILE_READER, id):
         add = loaded_objects.add()
         add.id = obj["v4r_id"]
         add.pose = pose
-    
+   
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
     with open(full_path, 'w') as f:
         yaml.dump(output_list, f, default_flow_style=False)
 
