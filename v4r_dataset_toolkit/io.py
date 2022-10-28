@@ -210,7 +210,6 @@ class SceneFileReader:
             f'camera_pose_file: {self.camera_pose_file}\n'\
             f'camera_intrinsics_file: {self.camera_intrinsics_file}\n'\
             f'object_library_file: {self.object_library_file}\n'\
-            f'associations_file: {self.associations_file}\n'\
             f'object_pose_file: {self.object_pose_file}\n'\
             f'reconstruction_file: {self.reconstruction_file}\n'\
             f'reconstruction_visual_file: {self.reconstruction_visual_file}\n'\
