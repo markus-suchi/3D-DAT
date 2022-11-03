@@ -73,6 +73,8 @@ class Reconstructor:
             mesh_full = volume.extract_triangle_mesh()
             
             # save the full reconstruction
+            os.makedirs(self.path_dataset, exist_ok=True)
+
             mesh_name = os.path.join(self.path_dataset, "reconstruction.ply")
             o3d.io.write_triangle_mesh(mesh_name, mesh_full, False, True)
 

@@ -170,18 +170,17 @@ class Scene:
 class SceneFileReader:
     def __init__(self, config):
         self.root_dir = config.get('root_dir')
-        self.scenes_dir = config.get('scenes_dir')
-        self.rgb_dir = config.get('rgb_dir')
-        self.depth_dir = config.get('depth_dir')
+        self.scenes_dir = config.get('scenes_dir','scenes')
+        self.rgb_dir = config.get('rgb_dir','rgb')
+        self.depth_dir = config.get('depth_dir','depth')
         self.camera_pose_file = config.get('camera_pose_file')
         self.camera_intrinsics_file = config.get('camera_intrinsics_file')
         self.object_library_file = config.get('object_library_file')
-        # How to separate recordings from annotations?
-        self.object_pose_file = config.get('object_pose_file')
+        self.object_pose_file = config.get('object_pose_file','poses.yaml')
         self.reconstruction_dir = config.get('reconstruction_dir')
-        self.reconstruction_file = config.get('reconstruction_file')
-        self.reconstruction_visual_file = config.get('reconstruction_visual_file')
-        self.reconstruction_align_file = config.get('reconstruction_align_file')
+        self.reconstruction_file = 'reconstruction.ply'
+        self.reconstruction_visual_file = 'reconstruction_visual.ply'
+        self.reconstruction_align_file = 'reconstruction_align.ply'
         self.mask_dir = config.get('mask_dir')
         self.scene_ids = self.get_scene_ids()
         self.object_library = self.get_object_library()
@@ -195,8 +194,31 @@ class SceneFileReader:
         if(os.path.exists(config_file)):
             with open(config_file, 'r') as fp:
                 cfg = yaml.load(fp, Loader=yaml.FullLoader)
-                if not cfg.get('root_dir'):
+                # check if we have general settings
+                if not cfg.get('General'):
+                    return None
+
+                if not cfg.get('General').get('root_dir'):
                     cfg['General']['root_dir']=os.path.dirname(os.path.abspath(config_file))
+
+                reconstruction_dir =  cfg.get('General').get('reconstruction_dir') or "reconstructions"
+                if not os.path.isabs(reconstruction_dir):
+                    cfg['General']['reconstruction_dir']=os.path.join(cfg['General']['root_dir'],reconstruction_dir)
+                else:
+                    cfg['General']['reconstruction_dir']=reconstruction_dir
+
+                annotation_dir =  cfg.get('General').get('annotation_dir') or "annotations"
+                if not os.path.isabs(annotation_dir):
+                    cfg['General']['annotation_dir']=os.path.join(cfg['General']['root_dir'],annotation_dir)
+                else:
+                    cfg['General']['annotation_dir']=annotation_dir
+
+                object_library_file =  cfg.get('General').get('object_library_file') or "objects/objects.yaml"
+                if not os.path.isabs(object_library_file):
+                    cfg['General']['object_library_file']=os.path.join(cfg['General']['root_dir'],object_library_file)
+                else:
+                    cfg['General']['object_library_file']=object_library_file
+
             return SceneFileReader(cfg['General'])
         else:
             raise FileNotFoundError(
@@ -211,6 +233,7 @@ class SceneFileReader:
             f'camera_intrinsics_file: {self.camera_intrinsics_file}\n'\
             f'object_library_file: {self.object_library_file}\n'\
             f'object_pose_file: {self.object_pose_file}\n'\
+            f'reconstruction_dir: {self.reconstruction_dir}\n'\
             f'reconstruction_file: {self.reconstruction_file}\n'\
             f'reconstruction_visual_file: {self.reconstruction_visual_file}\n'\
             f'reconstruction_align_file: {self.reconstruction_align_file}\n'\

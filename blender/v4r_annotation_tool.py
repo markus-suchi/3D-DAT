@@ -217,6 +217,8 @@ class V4R_OT_load_dataset(bpy.types.Operator):
         bpy.context.window.cursor_set("WAIT")
         print("Opening Dataset Library: " + self.filepath)
         SCENE_FILE_READER = v4r.io.SceneFileReader.create(self.filepath)
+        if(SCENE_FILE_READER):
+            print(SCENE_FILE_READER)
 
         context.scene.v4r_infos.dataset_file = self.filepath
         context.scene.v4r_infos.scene_ids.clear()
