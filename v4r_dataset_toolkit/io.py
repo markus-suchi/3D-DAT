@@ -150,8 +150,8 @@ class CameraTrajectory:
 
 
 class ObjectPose:
-    def __init__(self, id, pose=np.eye(4)):
-        self.id = id             # id of object in objectlibrary
+    def __init__(self, scene_id, pose=np.eye(4)):
+        self.id = scene_id             # id of object in objectlibrary
         self.pose = pose         # pose of the object
 
 
@@ -240,12 +240,16 @@ class SceneFileReader:
             f'annotation_dir: {self.annotation_dir}\n'\
             f'mask_dir: {self.mask_dir}'
 
-    def get_camera_info_scene(self, id):
-        full_path = os.path.join(
-            self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
 
+    def get_camera_info_scene_path(self, scene_id):
         full_path_scene_cam = os.path.join(
-            self.root_dir, self.scenes_dir, id, self.camera_intrinsics_file)
+            self.root_dir, self.scenes_dir, scene_id, self.camera_intrinsics_file)
+        
+        return full_path_scene_cam
+
+
+    def get_camera_info_scene(self, scene_id):
+        full_path_scene_cam = self.get_camera_info_scene_path(scene_id)
 
         if os.path.exists(full_path_scene_cam):
             return CameraInfo.create(full_path_scene_cam)
@@ -262,49 +266,49 @@ class SceneFileReader:
         full_path = os.path.join(self.root_dir, self.scenes_dir)
         return sorted([f.name for f in os.scandir(full_path) if f.is_dir()])
 
-    def get_camera_poses(self, id):
+    def get_camera_poses(self, scene_id):
         # check if id is in this datasets scene id list
         full_path = os.path.join(
-            self.root_dir, self.scenes_dir, id, self.camera_pose_file)
+            self.root_dir, self.scenes_dir, scene_id, self.camera_pose_file)
         with open(full_path) as fp:
             pose_lines = fp.readlines()
         # The recorded poses adds line entries -> disregard first entry
         return [Pose(line.strip().split()[1:], wxyz=False) for line in pose_lines]
 
-    def get_images_rgb(self, id):
-        files = self.get_images_rgb_path(id)
+    def get_images_rgb(self, scene_id):
+        files = self.get_images_rgb_path(scene_id)
         return [o3d.io.read_image(file) for file in files]
 
-    def get_images_rgb_path(self, id):
+    def get_images_rgb_path(self, scene_id):
         full_path = os.path.join(
-            self.root_dir, self.scenes_dir, id, self.rgb_dir)
+            self.root_dir, self.scenes_dir, scene_id, self.rgb_dir)
 
         extensions = ('.png', '.jpg')
         files = get_file_list(full_path, extensions)
         files.sort()
         return files
 
-    def get_images_depth(self, id):
-        files = self.get_images_depth_path(id)
+    def get_images_depth(self, scene_id):
+        files = self.get_images_depth_path(scene_id)
         return [o3d.io.read_image(file) for file in files]
 
-    def get_images_depth_path(self, id):
+    def get_images_depth_path(self, scene_id):
         full_path = os.path.join(
-            self.root_dir, self.scenes_dir, id, self.depth_dir)
+            self.root_dir, self.scenes_dir, scene_id, self.depth_dir)
 
         extensions = ('.png')
         files = get_file_list(full_path, extensions)
         files.sort()
         return files 
 
-    def get_pointclouds(self, id):
+    def get_pointclouds(self, scene_id):
         # return rgbd image reader which does not load images right away?
         # at loading it will use camera info, rgb and depth to create the rgbd image
         # with the help of open3d (maybe just the mesh?)
-        rgb_images = self.get_images_rgb(id)
-        depth_images = self.get_images_depth(id)
-        camera_info = self.get_camera_info_scene(id).as_o3d()
-        camera_poses = self.get_camera_poses(id)
+        rgb_images = self.get_images_rgb(scene_id)
+        depth_images = self.get_images_depth(scene_id)
+        camera_info = self.get_camera_info_scene(scene_id).as_o3d()
+        camera_poses = self.get_camera_poses(scene_id)
         pointclouds = []
         for i, camera_pose in enumerate(camera_poses):
             rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
@@ -315,42 +319,42 @@ class SceneFileReader:
 
         return pointclouds
 
-    def get_object_poses(self, id):
+    def get_object_poses(self, scene_id):
         full_path = os.path.join(
-            self.root_dir, self.annotation_dir, id, self.object_pose_file)
+            self.root_dir, self.annotation_dir, scene_id, self.object_pose_file)
 
         objects = []
         if os.path.exists(full_path):
             with open(full_path) as fp:
                 for items in (yaml.load(fp, Loader=yaml.FullLoader)):
-                    id = items.get("id")
+                    scene_id = items.get("id")
                     pose = items.get("pose")
                     if not pose:
                         pose = np.eye(4).tolist()
-                    objects.append([self.object_library[id], pose])
+                    objects.append([self.object_library[scene_id], pose])
         return objects
 
-    def get_reconstruction(self, id):
+    def get_reconstruction(self, scene_id):
         full_path = os.path.join(
-            self.reconstruction_dir, id, self.reconstruction_file)
+            self.reconstruction_dir, scene_id, self.reconstruction_file)
         if(os.path.exists(full_path)):
             return MeshReader(full_path)
         else:
             print(f"File {full_path} for reconstruction does not exist.")
             return None
 
-    def get_reconstruction_visual(self, id):
+    def get_reconstruction_visual(self, scene_id):
         full_path = os.path.join(
-            self.reconstruction_dir, id, self.reconstruction_visual_file)
+            self.reconstruction_dir, scene_id, self.reconstruction_visual_file)
         if(os.path.exists(full_path)):
             return MeshReader(full_path)
         else:
             print(f"File {full_path} for visualizing reconstruction does not exist.")
             return None
 
-    def get_reconstruction_align(self, id):
+    def get_reconstruction_align(self, scene_id):
         full_path = os.path.join(
-            self.reconstruction_dir, id, self.reconstruction_align_file)
+            self.reconstruction_dir, scene_id, self.reconstruction_align_file)
         if(os.path.exists(full_path)):
             return o3d.io.read_point_cloud(full_path)
         else:

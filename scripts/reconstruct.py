@@ -75,12 +75,7 @@ if __name__ == "__main__":
     scene_file_reader = v4r.io.SceneFileReader.create(args.dataset)
     print("Creating Reconstructor")
     # Refine with ICP
-    path_groundtruth = os.path.join(
-        scene_file_reader.root_dir,
-        scene_file_reader.scenes_dir,
-        args.scene_id,
-        scene_file_reader.camera_pose_file)
-
+    path_groundtruth = scene_file_reader.get_camera_info_scene_path(args.scene_id) 
     path_dataset = os.path.join(
         scene_file_reader.reconstruction_dir,
         args.scene_id)
