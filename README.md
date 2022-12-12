@@ -1,5 +1,11 @@
-Verifying annotated sample test scene:
+# install packages for blender
+cd ~/blender-2.92.0-linux64/2.92/python/bin
+./python3.7m -m ensurepip
+./python3.7m -m pip install --upgrade pip
+./python3.7m -m pip install --upgrade setuptools wheel
+./python3.7m -m pip install -e .
 
+Verifying annotated sample test scene:
 # visualize single view in scene using pointcloud and mesh objects
 python vis_annotation.py -c ~/temp/dataset/config.cfg -s "001"
 
