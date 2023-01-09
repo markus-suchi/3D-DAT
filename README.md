@@ -1,23 +1,33 @@
-Verifying annotated sample test scene:
+# install packages for blender
+```
+cd ~/blender-2.92.0-linux64/2.92/python/bin
+./python3.7m -m ensurepip
+./python3.7m -m pip install --upgrade pip
+./python3.7m -m pip install --upgrade setuptools wheel
+./python3.7m -m pip install -e .
+```
 
 # visualize single view in scene using pointcloud and mesh objects
+```
 python vis_annotation.py -c ~/temp/dataset/config.cfg -s "001"
+```
 
 # visualize object masks of single view in scene 
+```
 python vis_mask.py -c ~/temp/dataset/config.cfg -s "001"
-
-
+```
 
 # create virtual environment (needs >= python3.6)
+```
 virtualenv --python=python3.6 venv
 source venv/bin/activate  # linux
-
-# might want to upgrade pip and packages required for setup
 python -m pip install --upgrade pip
 pip install --upgrade setuptools wheel
-
+```
 # install in editable mode
+```
 pip install -e .
+```
 
 Dependencies:
 numpy
