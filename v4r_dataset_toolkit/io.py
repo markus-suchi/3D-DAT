@@ -250,6 +250,7 @@ class SceneFileReader:
 
     def get_camera_info_scene(self, scene_id):
         full_path_scene_cam = self.get_camera_info_scene_path(scene_id)
+        full_path = os.path.join( self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
 
         if os.path.exists(full_path_scene_cam):
             return CameraInfo.create(full_path_scene_cam)

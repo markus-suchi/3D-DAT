@@ -143,13 +143,15 @@ def load_cameras(SCENE_FILE_READER, id):
                 bpy.data.images.remove(i, do_unlink=True)
 
     # SCENE_FILE_READER should support loading images for blender
-    camera_rgb_path = os.path.join(
-        SCENE_FILE_READER.root_dir, SCENE_FILE_READER.scenes_dir,
-        id,
-        SCENE_FILE_READER.rgb_dir)
-    rgb = []
-    rgb = glob.glob(camera_rgb_path + "/*.png")
-    rgb.sort()
+    # camera_rgb_path = os.path.join(
+        # SCENE_FILE_READER.root_dir, SCENE_FILE_READER.scenes_dir,
+        # id,
+        # SCENE_FILE_READER.rgb_dir)
+    # rgb = []
+    # rgb = glob.glob(camera_rgb_path + "/*.png")
+    # rgb.sort()
+
+    rgb = SCENE_FILE_READER.get_images_rgb_path(id)
 
     # no active object
     bpy.ops.object.select_all(action='DESELECT')
