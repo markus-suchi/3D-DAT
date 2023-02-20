@@ -191,3 +191,9 @@ python vis_annotation.py -c ~/dataset/dataset.yaml -s "001"
 python vis_mask.py -c ~/dataset/dataset.yaml -s "001" -v
 ```
 
+
+## Acknowledgments 
+It is supported by CHIST-ERA and the Austrian Science Foundation (FWF) grant no. I3967-N30 BURG, 
+No. I3968-N30 HEAP, No. I3969-N30 InDex, and EC project No. 101017089 TraceBot.
+The authors gratefully acknowledge the financial support of Festo AG \& Co. KG.
+
