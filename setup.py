@@ -13,6 +13,7 @@ requirements_default = [
     'tqdm',
     'opencv-python',
     'matplotlib',
+    'pyglet==1.5.21',
     'pyrender',
     'configparser'
 ]
