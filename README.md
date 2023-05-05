@@ -103,7 +103,7 @@ Two config files are necessary to properly describe a dataset.
 1. dataset config file: contains configuration for the location of images, annotations and reconstructions
 2. object library file: contains configuration for object models
 
-dataset.yaml (all path can be absolute or relative to this config file):
+config.yaml (all path can be absolute or relative to this config file):
 ```
 ---
 General:                                                        #general settings for datasets
@@ -118,7 +118,7 @@ General:                                                        #general setting
     mask_dir: masks                                             #folder for generated masks within annotation_dir
     reconstruction_dir: reconstructions                         #folder to place reconstructions for align feature
     
-Reconstruction:                                                 #settings for reconstructions
+Reconstruction:                                                 #settings for reconstructions 
     debug_mode: False                                           #visualize debug output
     max_depth: 1.3                                              #trehshold max depth values
     voxel_size: 0.004                                           #voxel size for TSDF volume
@@ -128,7 +128,13 @@ Reconstruction:                                                 #settings for re
     simplify: False                                             #downsample resulting mesh using number of traingles entry
     triangles: 100000                                           #resulting triangles for mesh (lower will downsample more)                
     cluster: False                                              #save only largest cluster after reconstruction
-```
+
+Nerf:                                                           # see instant-DexNerf for details
+    sigma_threshold: 9                                          #density threshold (recommended between 9 - 15)
+    aabb_scale: 4                                               #scale of croping cube
+    train_steps: 4000                                           #traing steps per scene
+    view: 360                                                   #180/360 degree views of scene (frontal half spheric view or full spheric view)
+        
 
 The entries of the object library describe the objects used in the scene.
 
@@ -153,13 +159,24 @@ the following commands will create the necessary files.
 For this feature it is necessary to provide depth images of your recorded view. 
 You can use data recorded from a depth camera or use our NERF-based depth image generator to create depth from rgb images of your recordings.
 
-#### create depth images using NERF
-Soon to come...
+#### create depth images using NeRF
+The Documentation and installation instructions of the NeRF method we use can be found here: [instant-DexNerf](https://github.com/salykovaa/instant-DexNerf)
+To build the NeRF component change into the subdirectory of this repository and follow the linked instructions:
+```
+cd ~/3d-dat/nerf/instant-DexNerf
+```
+
+To create depth images for scenes use the following command. 
+You can pass a list of scene identifier to process multiple scenes. If you ommit the scene_id parameter the whole dataset will be processed.
+```
+./python3.7m ~/3d-dat/scripts/create_depth_nerf.py -d <path_to_dataset_config_file> -- scene_id '<scene_identifier1>' '<scene_identifier2>' ...
+```
 
 #### create reconstructions
 The depth data is used to generate reconstructions of the scene. They can be generated for a specific scene using the command below.
+You can pass a list of scene identifier to process multiple scenes. If you ommit the scene_id parameter the whole dataset will be processed.
 ```
-./python3.7m ~/3d-dat/scripts/reconstruct.py -d <path_to_dataset_config_file> -- scene_id '<scene_identifier>'
+./python3.7m ~/3d-dat/scripts/reconstruct.py -d <path_to_dataset_config_file> -- scene_id '<scene_identifier>' '<scene_identifier2>' ...
 ```
 After generating all the reconstructions for the scenes the data is ready for annotation.
 

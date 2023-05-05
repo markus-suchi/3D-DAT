@@ -27,7 +27,6 @@ Reconstruction:
     cluster: False
     
 Nerf:
-    view: 360
     sigma_threshold: 9
     aabb_scale: 4
     train_steps: 5000
