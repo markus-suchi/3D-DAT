@@ -1,0 +1,34 @@
+---
+General:
+    scenes_dir: scenes
+    rgb_dir: rgb
+    depth_dir: depth
+    camera_intrinsics_file: camera.yaml
+    camera_pose_file: groundtruth_handeye.txt
+    object_library_file: objects/objects_bop.yaml
+    annotation_dir: annotations
+    object_pose_file: poses.yaml
+    reconstruction_dir: scenes
+    reconstruction_file: reconstruction.ply
+    reconstruction_visual_file: reconstruction_visual.ply
+    reconstruction_align_file: reconstruction_align.ply
+    
+Reconstruction:
+    debug_mode: False
+    max_depth: 1.3
+    voxel_size: 0.004
+    tsdf_cubic_size: 1.5
+    icp_method: color
+    icp_refinement: False
+    save_refined: True
+    sdf_trunc: 0.018
+    triangles: 1000000
+    simplify: False
+    cluster: False
+    
+Nerf:
+    view: 360
+    sigma_threshold: 9
+    aabb_scale: 4
+    train_steps: 5000
+    view: 360
