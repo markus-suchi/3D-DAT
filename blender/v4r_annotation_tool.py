@@ -339,7 +339,7 @@ class V4R_PT_annotation(bpy.types.Panel):
     bl_idname = "V4R_PT_annotation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "3D-SADT"
+    bl_category = "3D-DAT"
 
     @classmethod
     def poll(self, context):
@@ -415,7 +415,7 @@ class V4R_PT_object_library(bpy.types.Panel):
     bl_idname = "V4R_PT_object_library"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "3D-SADT"
+    bl_category = "3D-DAT"
 
     @classmethod
     def poll(self, context):
@@ -436,7 +436,7 @@ class V4R_PT_import(bpy.types.Panel):
     bl_idname = "V4R_PT_import"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "3D-SADT"
+    bl_category = "3D-DAT"
 
     @classmethod
     def poll(self, context):
