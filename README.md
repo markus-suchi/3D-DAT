@@ -1,3 +1,4 @@
+
 # 3D-DAT Annotation Tool
 
 This tool provides an easy way to annotate poses of objects within a table top scene.
@@ -49,6 +50,13 @@ cd ~/blender-2.92.0-linux64/2.92/python/bin
 - Open "Edit" -> "Preferences..."
 - Go to "Add-ons", activate "Testing" tab at the top
 - Click on the checkbox to activate "User Interface: 3D-DAT - Annotation Plugin" and close preferences
+
+#### Install Instant-DexNerf for creating depth images from RGB
+The documentation and installation instructions of the NeRF method we use can be found here: [instant-DexNerf](https://github.com/salykovaa/instant-DexNerf)
+To build the NeRF component change into the subdirectory of this repository and follow the linked instructions:
+```
+cd ~/3d-dat/nerf/instant-DexNerf
+``` 
 
 ## Folder structure and Config-Files:
 We give a brief example of a possible folder structure which can be handled by our tools, and use it to describe corresponding configuration files.
@@ -110,7 +118,7 @@ General:                                                        #general setting
     scenes_dir: scenes                                          #folder of the scene data, each subfolder (scene_identifier) contains one scene record
     rgb_dir: rgb                                                #subfolder of scene_dir/scene_identifier for image data
     depth_dir: depth                                            #subfolder of scene_dir/scene_identifier for depth data
-    camera_intrinsics_file: camera.yaml                         #camera intrinsic file (in scene folder or scene identifier subfolder)  
+    camera_intrinsics_file: camera.yaml                         #camera intrinsic file (in scene folder or scene identifier subfolder)
     camera_pose_file: groundtruth_handeye.txt                   #camera poses file in scene_dir/scene_identifier
     object_library_file: objects/object_library.yaml            #path to object_library config
     annotation_dir: annotations                                 #subfolder for annotation data
@@ -123,10 +131,10 @@ Reconstruction:                                                 #settings for re
     max_depth: 1.3                                              #trehshold max depth values
     voxel_size: 0.004                                           #voxel size for TSDF volume
     tsdf_cubic_size: 1.5                                        #dimensions of TSDF volume
-    icp_method: color                                           #icp_methods: see open3D options    
+    icp_method: color                                           #icp_methods: see open3D options
     sdf_trunc: 0.018                                            #truncate threshold
     simplify: False                                             #downsample resulting mesh using number of traingles entry
-    triangles: 100000                                           #resulting triangles for mesh (lower will downsample more)                
+    triangles: 100000                                           #resulting triangles for mesh (lower will downsample more)
     cluster: False                                              #save only largest cluster after reconstruction
 
 Nerf:                                                           # see instant-DexNerf for details
@@ -134,7 +142,7 @@ Nerf:                                                           # see instant-De
     aabb_scale: 4                                               #scale of croping cube
     train_steps: 4000                                           #traing steps per scene
     view: 360                                                   #180/360 degree views of scene (frontal half spheric view or full spheric view)
-        
+```        
 
 The entries of the object library describe the objects used in the scene.
 
@@ -160,12 +168,6 @@ For this feature it is necessary to provide depth images of your recorded view.
 You can use data recorded from a depth camera or use our NERF-based depth image generator to create depth from rgb images of your recordings.
 
 #### create depth images using NeRF
-The Documentation and installation instructions of the NeRF method we use can be found here: [instant-DexNerf](https://github.com/salykovaa/instant-DexNerf)
-To build the NeRF component change into the subdirectory of this repository and follow the linked instructions:
-```
-cd ~/3d-dat/nerf/instant-DexNerf
-```
-
 To create depth images for scenes use the following command. 
 You can pass a list of scene identifier to process multiple scenes. If you ommit the scene_id parameter the whole dataset will be processed.
 ```
@@ -213,4 +215,5 @@ python vis_mask.py -c ~/dataset/dataset.yaml -s "001" -v
 It is supported by CHIST-ERA and the Austrian Science Foundation (FWF) grant no. I3967-N30 BURG, 
 No. I3968-N30 HEAP, No. I3969-N30 InDex, and EC project No. 101017089 TraceBot.
 The authors gratefully acknowledge the financial support of Festo AG \& Co. KG.
+
 
