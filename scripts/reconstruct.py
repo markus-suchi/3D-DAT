@@ -15,16 +15,19 @@ CONFIG = {
     "sdf_trunc": 0.018,
     "triangles": 1000000,
     "simplify": False,
-    "cluster" : False
+    "cluster": False
 }
+
 
 def load_config(file):
     with open(file, 'r') as fp:
         return yaml.load(fp, Loader=yaml.FullLoader)
     return none
-     
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Integrate the whole RGBD sequence using estimated camera pose.")
+    parser = argparse.ArgumentParser(
+        "Integrate the whole RGBD sequence using estimated camera pose.")
     parser.add_argument("-d", "--dataset", type=str, default="./config.cfg",
                         help="Path to data to reconstruct")
     parser.add_argument("--icp_refinement", action="store_true",
@@ -51,47 +54,47 @@ if __name__ == "__main__":
                         help="Scene identifier.")
     args = parser.parse_args()
 
-
     config = None
     if(os.path.exists(args.dataset)):
         config = load_config(args.dataset)
         if not "Reconstruction" in config:
-            print(f"Configuration file {args.dataset} does not contain reconstruction parameter.")
+            print(
+                f"Configuration file {args.dataset} does not contain reconstruction parameter.")
             print("Using default parameter.")
-            config=CONFIG
+            config = CONFIG
         else:
-            config=config.get('Reconstruction')
+            config = config.get('Reconstruction')
     else:
         print(f"The config {args.dataset} file does not exist.")
         os.sys.exit(1)
 
     if args.triangles:
-        config["triangles"]= args.triangles
+        config["triangles"] = args.triangles
 
     if args.icp_refinement:
-        config["icp_refinement"]=True
-        config["icp_method"]=args.icp_method
+        config["icp_refinement"] = True
+        config["icp_method"] = args.icp_method
 
     if args.simplify:
-        config["simplify"]=True
+        config["simplify"] = True
 
     if args.cluster:
-        config["cluster"]=True
+        config["cluster"] = True
 
     if args.debug_mode:
-        config["debug_mode"]= args.debug_mode
+        config["debug_mode"] = args.debug_mode
 
     if args.max_depth:
-        config["max_depth"]= args.max_depth
+        config["max_depth"] = args.max_depth
 
     if args.voxel_size:
-        config["voxel_size"]= args.voxel_size
+        config["voxel_size"] = args.voxel_size
 
     if args.tsdf_cubic_size:
-        config["tsdf_cubic_size"]= args.tsdf_cubic_size
+        config["tsdf_cubic_size"] = args.tsdf_cubic_size
 
     if args.sdf_trunc:
-        config["sdf_trunc"]= args.sdf_trunc
+        config["sdf_trunc"] = args.sdf_trunc
 
     print("Configuration:")
     for k, v in config.items():
@@ -116,7 +119,8 @@ if __name__ == "__main__":
     print("Creating Reconstruction")
     for scene_id in scenes:
         print(f"Processing scene: {scene_id}")
-        path_groundtruth = scene_file_reader.get_camera_info_scene_path(scene_id) 
+        path_groundtruth = scene_file_reader.get_camera_info_scene_path(
+            scene_id)
         path_dataset = os.path.join(
             scene_file_reader.reconstruction_dir,
             scene_id)
@@ -126,13 +130,13 @@ if __name__ == "__main__":
         intrinsic = scene_file_reader.get_camera_info_scene(scene_id).as_o3d()
         poses = scene_file_reader.get_camera_poses(scene_id)
 
-        reconstructor = v4r.reconstructor.Reconstructor(config=config, 
-                                      color_files = color_files,
-                                      depth_files = depth_files,
-                                      intrinsic = intrinsic,
-                                      poses = poses,
-                                      path_groundtruth = path_groundtruth,
-                                      path_dataset = path_dataset)
+        reconstructor = v4r.reconstructor.Reconstructor(config=config,
+                                                        color_files=color_files,
+                                                        depth_files=depth_files,
+                                                        intrinsic=intrinsic,
+                                                        poses=poses,
+                                                        path_groundtruth=path_groundtruth,
+                                                        path_dataset=path_dataset)
 
         reconstructor.create_reconstruction()
     print("Finished")

@@ -22,7 +22,6 @@ def sample_pointcloud(mesh, uniform_points=4500, poisson_points=4500):
 def auto_align(object_mesh, scene_mesh, init_pose=np.identity(4)):
 
     source_pcd = sample_pointcloud(object_mesh, 10000, 10000)
-    #source_pcd = sample_pointcloud(scene_mesh, 100000, 100000)
     target_pcd = scene_mesh
 
     transform = init_pose

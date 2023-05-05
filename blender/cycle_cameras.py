@@ -15,7 +15,7 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
         ),
         default='FORWARD'
     )
-    
+
     step: bpy.props.IntProperty(
         name="Step",
         default=1
@@ -23,7 +23,7 @@ class VIEW3D_OT_cycle_cameras(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return (context.area.type == 'VIEW_3D' and 
+        return (context.area.type == 'VIEW_3D' and
                 (bpy.data.collections.get('cameras') is not None))
 
     def execute(self, context):
@@ -78,12 +78,12 @@ def register():
             VIEW3D_OT_cycle_cameras.bl_idname, 'WHEELDOWNMOUSE', 'PRESS', ctrl=False, shift=True)
         kmi.properties.direction = 'BACKWARD'
         addon_keymaps.append((km, kmi))
- 
+
         kmi = km.keymap_items.new(
             VIEW3D_OT_cycle_cameras.bl_idname, 'WHEELUPMOUSE', 'PRESS', ctrl=False, shift=True)
         kmi.properties.direction = 'FORWARD'
         addon_keymaps.append((km, kmi))
- 
+
 
 def unregister():
     for km, kmi in addon_keymaps:

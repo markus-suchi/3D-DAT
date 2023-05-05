@@ -6,9 +6,6 @@ import yaml
 
 from .meshreader import MeshReader
 
-# Decide which attributes are optional
-# Idea: Minimal is id and mesh file
-
 
 class Object:
     def __init__(self, id=None, name=None, class_id=None, description=None, mesh_file=None, color=[0, 0, 0], scale=1):
@@ -51,7 +48,8 @@ class ObjectLibrary(UserDict):
                                                 description=obj.get(
                                                     'description'),
                                                 color=obj.get('color'),
-                                                mesh_file=os.path.join(root, mesh) if mesh else None,
+                                                mesh_file=os.path.join(
+                                                    root, mesh) if mesh else None,
                                                 scale=scale if scale else 1)
             return object_dict
 

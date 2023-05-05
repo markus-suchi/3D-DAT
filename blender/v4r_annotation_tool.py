@@ -116,7 +116,7 @@ class V4R_PG_infos(bpy.types.PropertyGroup):
     show_cameras: bpy.props.BoolProperty(name="Show cameras", default=True,
                                          update=update_show_cameras, options=set())
     show_reconstruction: bpy.props.BoolProperty(name="Show reconstruction", default=True,
-                                         update=update_show_reconstruction, options=set())
+                                                update=update_show_reconstruction, options=set())
     object_list: bpy.props.CollectionProperty(
         name="Loaded Objects", type=V4R_PG_object_list)
 
@@ -175,7 +175,7 @@ class V4R_OT_import_scene(bpy.types.Operator):
     def invoke(self, context, event):
         # check if poses of objects has changed since import
         # compare current objects with loaded_object list
-        doit = v4r_blender_utils.has_scene_changed() 
+        doit = v4r_blender_utils.has_scene_changed()
         if doit:
             return context.window_manager.invoke_props_dialog(self)
         else:
@@ -206,11 +206,10 @@ class V4R_OT_load_dataset(bpy.types.Operator):
                 for obj in objects:
                     item = context.scene.object_selector.objects.add()
                     item.name = obj.name
-                    item.id   = obj.id
+                    item.id = obj.id
             else:
                 self.report({'Error'}, 'Opening Object Libraray failed.')
-               
- 
+
     def execute(self, context):
         global SCENE_FILE_READER
 
@@ -227,7 +226,8 @@ class V4R_OT_load_dataset(bpy.types.Operator):
 
         # Set to first entry
         if context.scene.v4r_infos.scene_ids:
-            context.scene.v4r_infos.selected_scene_id = context.scene.v4r_infos.scene_ids[0].name
+            context.scene.v4r_infos.selected_scene_id = context.scene.v4r_infos.scene_ids[
+                0].name
 
         # Populate object list for adding models
         self.populate_object_selector(context)
@@ -306,9 +306,10 @@ class V4R_OT_import_reconstruction(bpy.types.Operator):
         if(id):
             v4r_blender_utils.load_reconstruction_visual(SCENE_FILE_READER, id)
             update_show_reconstruction(self, context)
- 
+
         bpy.context.window.cursor_set("DEFAULT")
         return {'FINISHED'}
+
 
 class V4R_OT_add_object(bpy.types.Operator):
     """ Add object to scene. """
@@ -329,7 +330,7 @@ class V4R_OT_add_object(bpy.types.Operator):
         scene_id = scene.v4r_infos.scene_id
         if(scene_id):
             object = scene.object_selector.objects[scene.object_selector.index]
-            v4r_blender_utils.add_object(SCENE_FILE_READER, object.id) 
+            v4r_blender_utils.add_object(SCENE_FILE_READER, object.id)
         bpy.context.window.cursor_set("DEFAULT")
         return {'FINISHED'}
 
@@ -351,7 +352,7 @@ class V4R_PT_annotation(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         v4r_infos = scene.v4r_infos
-        
+
         col = layout.column(align=True)
 
         row = col.row(align=True)
@@ -370,20 +371,23 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         row = col.row(align=True)
         row.label(text="Camera:")
-        row.prop(context.area.spaces.active, "camera", text="", icon='CAMERA_DATA')
-        row.prop(v4r_infos, "show_cameras", toggle=True, expand=False, icon='HIDE_OFF', icon_only=True)
-        
+        row.prop(context.area.spaces.active, "camera",
+                 text="", icon='CAMERA_DATA')
+        row.prop(v4r_infos, "show_cameras", toggle=True,
+                 expand=False, icon='HIDE_OFF', icon_only=True)
+
         col.separator()
 
         row = col.row(align=True)
         row.label(text="Display:")
         row.prop(v4r_infos, "color_type", expand=True)
-        
+
         col.separator()
 
         row = col.row(align=True)
         row.label(text="Scene Alpha:")
-        color_alpha = row.prop(v4r_infos, "color_alpha", text="", slider=True, expand=True)
+        color_alpha = row.prop(v4r_infos, "color_alpha",
+                               text="", slider=True, expand=True)
         if v4r_infos.color_type == 'VERTEX':
             row.enabled = False
         else:
@@ -393,8 +397,8 @@ class V4R_PT_annotation(bpy.types.Panel):
 
         row = col.row(align=True)
         obj = context.active_object
-        if obj: 
-            row.prop(obj,"color", text="Object Color:")
+        if obj:
+            row.prop(obj, "color", text="Object Color:")
         else:
             row.label(text="Object Color:")
 
@@ -408,7 +412,9 @@ class V4R_PT_annotation(bpy.types.Panel):
         row = col.row(align=True)
         row.label(text="Reconstruction:")
         row.operator("v4r.import_reconstruction", text="Import")
-        row.prop(v4r_infos, "show_reconstruction", toggle=True, icon='HIDE_OFF', icon_only=True)
+        row.prop(v4r_infos, "show_reconstruction",
+                 toggle=True, icon='HIDE_OFF', icon_only=True)
+
 
 class V4R_PT_object_library(bpy.types.Panel):
     bl_label = "Object Library"
@@ -428,9 +434,11 @@ class V4R_PT_object_library(bpy.types.Panel):
         v4r_infos = scene.v4r_infos
 
         col = layout.column(align=True)
-        col.template_list("V4R_UL_object_selector", "", scene.object_selector, "objects", scene.object_selector, "index")
-        col.operator("v4r.add_object", text="Add Object")  
-        
+        col.template_list("V4R_UL_object_selector", "", scene.object_selector,
+                          "objects", scene.object_selector, "index")
+        col.operator("v4r.add_object", text="Add Object")
+
+
 class V4R_PT_import(bpy.types.Panel):
     bl_label = "Import"
     bl_idname = "V4R_PT_import"
@@ -455,7 +463,7 @@ class V4R_PT_import(bpy.types.Panel):
         col.separator()
 
         col.prop_search(v4r_infos, "selected_scene_id", v4r_infos,
-                        "scene_ids", icon="IMAGE_DATA",text="Scene")
+                        "scene_ids", icon="IMAGE_DATA", text="Scene")
         col.operator("v4r.import_scene")
 
 
@@ -477,9 +485,9 @@ def register():
     bpy.utils.register_class(V4R_UL_object_selector)
 
     bpy.types.Scene.object_selector = bpy.props.PointerProperty(
-                name="Objects",
-                type=V4R_PG_object_selector
-            )
+        name="Objects",
+        type=V4R_PG_object_selector
+    )
 
     bpy.types.Scene.v4r_infos = bpy.props.PointerProperty(type=V4R_PG_infos)
 
