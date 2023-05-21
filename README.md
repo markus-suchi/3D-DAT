@@ -198,7 +198,7 @@ You can pass a list of scene identifier to process multiple scenes. If you ommit
 After generating all the reconstructions for the scenes the data is ready for annotation.
 
 ### Annotation
-**Start an annotation session using: "File" -> "New" -> "3D-DAT"
+**Start an annotation session using: "File" -> "New" -> "3D-DAT"**
 - In the main window to the top right expand the Property Window
 - Select "3D-DAT" to see the addon menu
 
