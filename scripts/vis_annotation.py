@@ -43,13 +43,13 @@ def visualize_objects(pointcloud=None, oriented_models=None, camera_pose=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Visualize annotated data.")
-    parser.add_argument("-c", "--config", type=str, required=True,
-                        help="Path to datast configuration.")
+    parser.add_argument("-d", "--dataset", type=str, required=True,
+                        help="Path to dataset configuration.")
     parser.add_argument("-s", "--scene_id", type=str, required=True,
                         help="Scene identifier to visualize.")
     args = parser.parse_args()
 
-    scene_file_reader = v4r.io.SceneFileReader.create(args.config)
+    scene_file_reader = v4r.io.SceneFileReader.create(args.dataset)
 
     oriented_models = load_object_models(scene_file_reader, args.scene_id)
 

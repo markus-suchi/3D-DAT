@@ -28,8 +28,8 @@ def load_config(file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Integrate the whole RGBD sequence using estimated camera pose.")
-    parser.add_argument("-d", "--dataset", type=str, default="./config.cfg",
-                        help="Path to data to reconstruct")
+    parser.add_argument("-d", "--dataset", type=str, default="./dataset.yaml",
+                        help="Path to dataset configuration.")
     parser.add_argument("--icp_refinement", action="store_true",
                         help="Activate the ICP refinement step")
     parser.add_argument("--triangles", type=int, default=None,
