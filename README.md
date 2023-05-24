@@ -220,12 +220,12 @@ When you continue working on a dataset annotation, start again by choosing "File
 Here we describe some example scripts which are used to visualize or generate additional annotated data.
 ### visualize single view in scene using pointcloud and mesh objects
 ```
-./python3.7m vis_annotation.py -c ~/dataset/dataset.yaml -s "001"
+./python3.7m vis_annotation.py -d ~/dataset/dataset.yaml -s "001"
 ```
 
 ### visualize & save object masks of single view in scene 
 ```
-./python3.7m vis_masks.py -c ~/dataset/dataset.yaml -s "001" -v -b
+./python3.7m vis_masks.py -d ~/dataset/dataset.yaml -s "001" -v -b
 ```
 
 
