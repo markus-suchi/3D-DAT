@@ -186,14 +186,14 @@ You can use data recorded from a depth camera or use our NERF-based depth image 
 To create depth images for scenes use the following command. 
 You can pass a list of scene identifier to process multiple scenes. If you ommit the scene_id parameter the whole dataset will be processed.
 ```
-./python3.7m ~/3d-dat/scripts/create_depth_nerf.py -d <path_to_dataset_config_file> -- scene_id '<scene_identifier1>' '<scene_identifier2>' ...
+./python3.7m ~/3d-dat/scripts/create_depth_nerf.py -d <path_to_dataset_config_file> --scene_id '<scene_identifier1>' '<scene_identifier2>' ...
 ```
 
 #### create reconstructions
 The depth data is used to generate reconstructions of the scene. They can be generated for a specific scene using the command below.
 You can pass a list of scene identifier to process multiple scenes. If you ommit the scene_id parameter the whole dataset will be processed.
 ```
-./python3.7m ~/3d-dat/scripts/reconstruct.py -d <path_to_dataset_config_file> -- scene_id '<scene_identifier>' '<scene_identifier2>' ...
+./python3.7m ~/3d-dat/scripts/reconstruct.py -d <path_to_dataset_config_file> --scene_id '<scene_identifier>' '<scene_identifier2>' ...
 ```
 After generating all the reconstructions for the scenes the data is ready for annotation.
 
@@ -220,12 +220,12 @@ When you continue working on a dataset annotation, start again by choosing "File
 Here we describe some example scripts which are used to visualize or generate additional annotated data.
 ### visualize single view in scene using pointcloud and mesh objects
 ```
-./python3.7m vis_annotation.py -d ~/dataset/dataset.yaml -s "001"
+./python3.7m vis_annotation.py -d <path_to_dataset_config_file> --scene_id '<scene_identifier>'
 ```
 
 ### visualize & save object masks of single view in scene 
 ```
-./python3.7m vis_masks.py -d ~/dataset/dataset.yaml -s "001" -v -b
+./python3.7m vis_masks.py -d <path_to_dataset_config_file> --scene_id '<scene_identifier>' -v -b
 ```
 
 
