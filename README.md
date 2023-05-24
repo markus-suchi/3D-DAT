@@ -10,6 +10,9 @@ The recorded data has to include the following informations:
 4. object models
 5. [optional] depth images from each view, necessary for auto-align feature
 
+*Remark: We are working on making the ROS based 3D-DAT recorder also available here in the future.
+The recorder allows to gather data from ROS topics compatible with the annotation tool.*
+
 ## Installation
 Here we describe the necessary steps to install the annotation toolkit.
 
