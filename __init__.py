@@ -31,7 +31,7 @@ def copy_startup_file(dirname, filename):
 
 bl_info = {
     "author": "Markus Suchi",
-    "name": "3D-SADT - Annotation Plugin",
+    "name": "3D-DAT - Annotation Plugin",
     "description": "Tools for annotating RGBD-data",
     "warning": "",
     "version": (0, 1),
@@ -49,8 +49,7 @@ else:
     from . import v4r_dataset_toolkit as v4r
     from .blender import v4r_annotation_tool
     from .blender import cycle_cameras
-    copy_startup_file('3D-SADT', '3D-SADT-single.blend')
-    copy_startup_file('3D-SADT-dual', '3D-SADT-dual.blend')
+    copy_startup_file('3D-DAT', '3D-DAT-single.blend')
 
 
 #### REGISTER ###

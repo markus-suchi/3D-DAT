@@ -117,8 +117,8 @@ def load_object_models(scene_file_reader):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Reproject models to create annotation images.")
-    parser.add_argument("-c", "--config", type=str, required=True,
-                        help="Path to reconstructed data")
+    parser.add_argument("-d", "--dataset", type=str, required=True,
+                        help="Path to dataset configuration.")
     parser.add_argument("-s", "--scene_id", type=str, required=True,
                         help="Scene identifier to visualize.")
     parser.add_argument("-b", "--background", action='store_true',
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    scene_file_reader = v4r.io.SceneFileReader.create(args.config)
+    scene_file_reader = v4r.io.SceneFileReader.create(args.dataset)
     camera_poses = scene_file_reader.get_camera_poses(args.scene_id)
     intrinsic = scene_file_reader.get_camera_info_scene(args.scene_id)
     objects = scene_file_reader.get_object_poses(args.scene_id)

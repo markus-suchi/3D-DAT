@@ -170,13 +170,13 @@ class Scene:
 class SceneFileReader:
     def __init__(self, config):
         self.root_dir = config.get('root_dir')
-        self.scenes_dir = config.get('scenes_dir','scenes')
-        self.rgb_dir = config.get('rgb_dir','rgb')
-        self.depth_dir = config.get('depth_dir','depth')
+        self.scenes_dir = config.get('scenes_dir', 'scenes')
+        self.rgb_dir = config.get('rgb_dir', 'rgb')
+        self.depth_dir = config.get('depth_dir', 'depth')
         self.camera_pose_file = config.get('camera_pose_file')
         self.camera_intrinsics_file = config.get('camera_intrinsics_file')
         self.object_library_file = config.get('object_library_file')
-        self.object_pose_file = config.get('object_pose_file','poses.yaml')
+        self.object_pose_file = config.get('object_pose_file', 'poses.yaml')
         self.reconstruction_dir = config.get('reconstruction_dir')
         self.reconstruction_file = 'reconstruction.ply'
         self.reconstruction_visual_file = 'reconstruction_visual.ply'
@@ -199,25 +199,32 @@ class SceneFileReader:
                     return None
 
                 if not cfg.get('General').get('root_dir'):
-                    cfg['General']['root_dir']=os.path.dirname(os.path.abspath(config_file))
+                    cfg['General']['root_dir'] = os.path.dirname(
+                        os.path.abspath(config_file))
 
-                reconstruction_dir =  cfg.get('General').get('reconstruction_dir') or "reconstructions"
+                reconstruction_dir = cfg.get('General').get(
+                    'reconstruction_dir') or "reconstructions"
                 if not os.path.isabs(reconstruction_dir):
-                    cfg['General']['reconstruction_dir']=os.path.join(cfg['General']['root_dir'],reconstruction_dir)
+                    cfg['General']['reconstruction_dir'] = os.path.join(
+                        cfg['General']['root_dir'], reconstruction_dir)
                 else:
-                    cfg['General']['reconstruction_dir']=reconstruction_dir
+                    cfg['General']['reconstruction_dir'] = reconstruction_dir
 
-                annotation_dir =  cfg.get('General').get('annotation_dir') or "annotations"
+                annotation_dir = cfg.get('General').get(
+                    'annotation_dir') or "annotations"
                 if not os.path.isabs(annotation_dir):
-                    cfg['General']['annotation_dir']=os.path.join(cfg['General']['root_dir'],annotation_dir)
+                    cfg['General']['annotation_dir'] = os.path.join(
+                        cfg['General']['root_dir'], annotation_dir)
                 else:
-                    cfg['General']['annotation_dir']=annotation_dir
+                    cfg['General']['annotation_dir'] = annotation_dir
 
-                object_library_file =  cfg.get('General').get('object_library_file') or "objects/objects.yaml"
+                object_library_file = cfg.get('General').get(
+                    'object_library_file') or "objects/objects.yaml"
                 if not os.path.isabs(object_library_file):
-                    cfg['General']['object_library_file']=os.path.join(cfg['General']['root_dir'],object_library_file)
+                    cfg['General']['object_library_file'] = os.path.join(
+                        cfg['General']['root_dir'], object_library_file)
                 else:
-                    cfg['General']['object_library_file']=object_library_file
+                    cfg['General']['object_library_file'] = object_library_file
 
             return SceneFileReader(cfg['General'])
         else:
@@ -240,17 +247,16 @@ class SceneFileReader:
             f'annotation_dir: {self.annotation_dir}\n'\
             f'mask_dir: {self.mask_dir}'
 
-
     def get_camera_info_scene_path(self, scene_id):
         full_path_scene_cam = os.path.join(
             self.root_dir, self.scenes_dir, scene_id, self.camera_intrinsics_file)
-        
-        return full_path_scene_cam
 
+        return full_path_scene_cam
 
     def get_camera_info_scene(self, scene_id):
         full_path_scene_cam = self.get_camera_info_scene_path(scene_id)
-        full_path = os.path.join( self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
+        full_path = os.path.join(
+            self.root_dir, self.scenes_dir, self.camera_intrinsics_file)
 
         if os.path.exists(full_path_scene_cam):
             return CameraInfo.create(full_path_scene_cam)
@@ -300,7 +306,7 @@ class SceneFileReader:
         extensions = ('.png')
         files = get_file_list(full_path, extensions)
         files.sort()
-        return files 
+        return files
 
     def get_pointclouds(self, scene_id):
         # return rgbd image reader which does not load images right away?
@@ -350,7 +356,8 @@ class SceneFileReader:
         if(os.path.exists(full_path)):
             return MeshReader(full_path)
         else:
-            print(f"File {full_path} for visualizing reconstruction does not exist.")
+            print(
+                f"File {full_path} for visualizing reconstruction does not exist.")
             return None
 
     def get_reconstruction_align(self, scene_id):
@@ -361,4 +368,3 @@ class SceneFileReader:
         else:
             print(f"File {full_path} for  auto-align does not exist.")
             return None
-

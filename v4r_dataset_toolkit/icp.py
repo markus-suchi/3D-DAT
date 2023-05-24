@@ -5,6 +5,7 @@ import copy
 
 flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
 
+
 def draw_registration_result_original_color(source, target, transformation):
     source_temp = copy.deepcopy(source)
     target_temp = copy.deepcopy(target)
@@ -23,7 +24,7 @@ def multiscale_icp(source,
     current_transformation = init_transformation
     for i, scale in enumerate(range(len(max_iter))):  # multi-scale approach
         iter = max_iter[scale]
-        distance_threshold = float(config.get("voxel_size")) * 1.4  
+        distance_threshold = float(config.get("voxel_size")) * 1.4
         # print("voxel_size %f" % voxel_size[scale])
         source_down = source.voxel_down_sample(voxel_size[scale])
         target_down = target.voxel_down_sample(voxel_size[scale])
@@ -37,19 +38,19 @@ def multiscale_icp(source,
                     max_iteration=iter,
                     relative_fitness=1e-6,
                     relative_rmse=1e-6,
-                        ))
+                ))
         elif config.get("icp_method") == "robust_icp":
             print("Robust ICP")
-            conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
-                        relative_fitness=1e-6,
-                        relative_rmse=1e-6,
-                        max_iteration=iter)
-             
+            conv_criteria = o3d.pipelines.registration.ICPConvergenceCriteria(
+                relative_fitness=1e-6,
+                relative_rmse=1e-6,
+                max_iteration=iter)
+
             result_icp = o3d.pipelines.registration.registration_generalized_icp(
                 source_down, target_down, distance_threshold,
-                init = current_transformation,
-                estimation_method = o3d.pipelines.registration.TransformationEstimationForGeneralizedICP(),
-                criteria = conv_criteria)
+                init=current_transformation,
+                estimation_method=o3d.pipelines.registration.TransformationEstimationForGeneralizedICP(),
+                criteria=conv_criteria)
             print(result_icp)
         else:
             source_down.estimate_normals(
@@ -70,19 +71,20 @@ def multiscale_icp(source,
                                                                       relative_fitness=1e-6,
                                                                       relative_rmse=1e-6))
             elif config.get("icp_method") == "color":
-                conv_criteria =  o3d.pipelines.registration.ICPConvergenceCriteria(
-                        relative_fitness=1e-6,
-                        relative_rmse=1e-6,
-                        max_iteration=iter)
+                conv_criteria = o3d.pipelines.registration.ICPConvergenceCriteria(
+                    relative_fitness=1e-6,
+                    relative_rmse=1e-6,
+                    max_iteration=iter)
                 result_icp = o3d.pipelines.registration.registration_colored_icp(
-                    source=source_down, 
-                    target=target_down, 
+                    source=source_down,
+                    target=target_down,
                     max_correspondence_distance=voxel_size[scale],
-                    init=current_transformation, 
+                    init=current_transformation,
                     criteria=conv_criteria
-                    )
+                )
             else:
-                raise TypeError("Method %s not supported." % config["icp_method"])
+                raise TypeError("Method %s not supported." %
+                                config["icp_method"])
 
         current_transformation = result_icp.transformation
         if i == len(max_iter) - 1:

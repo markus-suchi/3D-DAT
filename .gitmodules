@@ -1,0 +1,3 @@
+[submodule "nerf/instant-DexNerf"]
+	path = nerf/instant-DexNerf
+	url = https://github.com/salykovaa/instant-DexNerf
