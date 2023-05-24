@@ -225,7 +225,7 @@ Here we describe some example scripts which are used to visualize or generate ad
 
 ### visualize & save object masks of single view in scene 
 ```
-./python3.7m vis_masks.py -c ~/dataset/dataset.yaml -s "001" -v
+./python3.7m vis_masks.py -c ~/dataset/dataset.yaml -s "001" -v -b
 ```
 
 
