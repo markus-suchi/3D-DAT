@@ -36,7 +36,7 @@ cd blender-2.92.0-linux64/2.92/scripts/addons
 ln -s ~/3d-dat/ 3d-dat
 ```
 
-Install dependencies in blender python:
+Install dependencies in blender python (from now on all python commands are initiated in the blender directory):
 ```
 cd ~/blender-2.92.0-linux64/2.92/python/bin
 ./python3.7m -m ensurepip
@@ -53,7 +53,8 @@ cd ~/blender-2.92.0-linux64/2.92/python/bin
 
 #### Install Instant-DexNerf for creating depth images from RGB
 The documentation and installation instructions of the NeRF method we use can be found here: [instant-DexNerf](https://github.com/salykovaa/instant-DexNerf)
-To build the NeRF component change into the subdirectory of this repository and follow the linked instructions:
+Complete all the necessary dependencies installs and follow the build instructions.
+To build the NeRF component change into the subdirectory of this repository:
 ```
 cd ~/3d-dat/nerf/instant-DexNerf
 ``` 
@@ -138,7 +139,6 @@ General:                                                        #general setting
     object_library_file: objects/object_library.yaml            #path to object_library config
     annotation_dir: annotations                                 #subfolder for annotation data
     object_pose_file: poses.yaml                                #name of annotated poses file within annotation_dir
-    mask_dir: masks                                             #folder for generated masks within annotation_dir
     reconstruction_dir: reconstructions                         #folder to place reconstructions for align feature
     
 Reconstruction:                                                 #settings for reconstructions 
@@ -220,12 +220,12 @@ When you continue working on a dataset annotation, start again by choosing "File
 Here we describe some example scripts which are used to visualize or generate additional annotated data.
 ### visualize single view in scene using pointcloud and mesh objects
 ```
-python vis_annotation.py -c ~/dataset/dataset.yaml -s "001"
+./python3.7m vis_annotation.py -c ~/dataset/dataset.yaml -s "001"
 ```
 
 ### visualize & save object masks of single view in scene 
 ```
-python vis_mask.py -c ~/dataset/dataset.yaml -s "001" -v
+./python3.7m vis_masks.py -c ~/dataset/dataset.yaml -s "001" -v
 ```
 
 
