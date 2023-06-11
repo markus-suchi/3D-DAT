@@ -6,8 +6,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 python_versions = '>=3.6'  # restricted by availability of pyrender
 
 requirements_default = [
-    'numpy',       
-    'open3d', # newer versions do not work with opencv for Ubuntu < 18.04
+    'numpy',
+    'open3d',
     'trimesh[easy]',
     'pyyaml',
     'tqdm',
@@ -24,7 +24,7 @@ reqs_all = list(set(requirements_default))
 
 setuptools.setup(
     name='v4r_dataset_toolkit',
-    version='0.1',
+    version='1.0',
     python_requires=python_versions,
     install_requires=reqs_all,
     packages=setuptools.find_packages(),
