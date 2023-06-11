@@ -72,6 +72,7 @@ cd ~/3d-dat/nerf/instant-DexNerf
 ``` 
 
 Follow the information and build instructions provided in the instant-DexNerf link above.
+We tested the depth generation with NVIDIA driver 510.47.03 and CUDA 11.6 using cmake 3.21.
 
 ## Folder structure and Config-Files:
 We give a brief example of a possible folder structure which can be handled by our tools, and use it to describe corresponding configuration files.
