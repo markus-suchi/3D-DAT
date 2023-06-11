@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
     
-python_versions = '>=3.6, <3.9'  # restricted by availability of pyrender
+python_versions = '>=3.6'  # restricted by availability of pyrender
 
 requirements_default = [
     'numpy',       
