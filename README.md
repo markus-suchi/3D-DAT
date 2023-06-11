@@ -54,13 +54,24 @@ cd ~/blender-2.92.0-linux64/2.92/python/bin
 - Go to "Add-ons", activate "Testing" tab at the top
 - Click on the checkbox to activate "User Interface: 3D-DAT - Annotation Plugin" and close preferences
 
+#### Testing the application
+Download the example dataset from [here](https://drive.google.com/file/d/1S5Y8DAO5bLHSku7jRLE5PrHXpbTEkCS1/view?usp=drive_link) and extract it.
+Use the contained dataset.yaml configuration file to test the annotation app and the incuded 3D-DAT scripts.
+
 #### Install Instant-DexNerf for creating depth images from RGB
-The documentation and installation instructions of the NeRF method we use can be found here: [instant-DexNerf](https://github.com/salykovaa/instant-DexNerf)
-Complete all the necessary dependencies installs and follow the build instructions.
+The documentation and installation instructions of the NeRF method we use can be found here: [instant-DexNerf](https://github.com/salykovaa/instant-DexNerf).
+If you choose to use this component which is build upon NVIDIA's isntant-ngp you have to agree to NVIDIAS License (included in the repository).
+First pull in the instant-DexNerf repository with:
+```
+git submodule update --init --recursive
+``` 
+
 To build the NeRF component change into the subdirectory of this repository:
 ```
 cd ~/3d-dat/nerf/instant-DexNerf
 ``` 
+
+Follow the information and build instructions provided in the instant-DexNerf link above.
 
 ## Folder structure and Config-Files:
 We give a brief example of a possible folder structure which can be handled by our tools, and use it to describe corresponding configuration files.
